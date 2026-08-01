@@ -59,7 +59,8 @@
     "index.cjs",
     "index.d.ts",
     "config.svg",
-    "LICENSE"
+    "LICENSE",
+    ".editorconfig"
   ],
   "publishConfig": {
     "access": "public"
@@ -69,19 +70,19 @@
     "lint": "node test/test.js"
   },
   "dependencies": {
-    "@sebastienrousseau/browserslist-config": "^1.0.0",
-    "@sebastienrousseau/c8-config": "^1.0.0",
-    "@sebastienrousseau/commitlint-config": "^1.0.0",
-    "@sebastienrousseau/eslint-config": "^1.0.0",
-    "@sebastienrousseau/jsdoc-config": "^1.0.0",
-    "@sebastienrousseau/knip-config": "^1.0.0",
-    "@sebastienrousseau/markdownlint-config": "^1.0.0",
-    "@sebastienrousseau/mocha-config": "^1.0.0",
-    "@sebastienrousseau/prettier-config": "^1.0.0",
-    "@sebastienrousseau/remark-config": "^1.0.0",
-    "@sebastienrousseau/semantic-release-config": "^1.0.0",
-    "@sebastienrousseau/stylelint-config": "^1.0.0",
-    "@sebastienrousseau/tsconfig-config": "^1.0.0",
-    "@sebastienrousseau/vitest-config": "^1.0.0"
+    "@sebastienrousseau/browserslist-config": "file:../browserslist-config",
+    "@sebastienrousseau/c8-config": "file:../c8-config",
+    "@sebastienrousseau/commitlint-config": "file:../commitlint-config",
+    "@sebastienrousseau/eslint-config": "file:../eslint-config",
+    "@sebastienrousseau/jsdoc-config": "file:../jsdoc-config",
+    "@sebastienrousseau/knip-config": "file:../knip-config",
+    "@sebastienrousseau/markdownlint-config": "file:../markdownlint-config",
+    "@sebastienrousseau/mocha-config": "file:../mocha-config",
+    "@sebastienrousseau/prettier-config": "file:../prettier-config",
+    "@sebastienrousseau/remark-config": "file:../remark-config",
+    "@sebastienrousseau/semantic-release-config": "file:../semantic-release-config",
+    "@sebastienrousseau/stylelint-config": "file:../stylelint-config",
+    "@sebastienrousseau/tsconfig-config": "file:../tsconfig-config",
+    "@sebastienrousseau/vitest-config": "file:../vitest-config"
   }
 }
