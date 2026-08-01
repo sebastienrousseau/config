@@ -1,0 +1,87 @@
+{
+  "name": "@sebastienrousseau/config",
+  "version": "1.0.0",
+  "description": "Master configuration suite providing standardized ESLint, Prettier, TypeScript, Vitest, Stylelint, Markdownlint, Commitlint, Remark, c8, JSDoc, Mocha, Browserslist, Knip, and Semantic-Release rules",
+  "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
+  "license": "ISC",
+  "homepage": "https://github.com/sebastienrousseau/config#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastienrousseau/config.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sebastienrousseau/config/issues"
+  },
+  "keywords": [
+    "config",
+    "eslint-config",
+    "prettier-config",
+    "tsconfig",
+    "vitest-config",
+    "stylelint-config",
+    "commitlint-config",
+    "markdownlint-config",
+    "remark-config",
+    "c8-config",
+    "jsdoc-config",
+    "mocha-config",
+    "browserslist-config",
+    "knip-config",
+    "semantic-release-config"
+  ],
+  "main": "./index.cjs",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.cjs"
+    },
+    "./eslint": "@sebastienrousseau/eslint-config",
+    "./prettier": "@sebastienrousseau/prettier-config",
+    "./tsconfig": "@sebastienrousseau/tsconfig-config",
+    "./vitest": "@sebastienrousseau/vitest-config",
+    "./stylelint": "@sebastienrousseau/stylelint-config",
+    "./commitlint": "@sebastienrousseau/commitlint-config",
+    "./markdownlint": "@sebastienrousseau/markdownlint-config",
+    "./remark": "@sebastienrousseau/remark-config",
+    "./c8": "@sebastienrousseau/c8-config",
+    "./jsdoc": "@sebastienrousseau/jsdoc-config",
+    "./mocha": "@sebastienrousseau/mocha-config",
+    "./browserslist": "@sebastienrousseau/browserslist-config",
+    "./knip": "@sebastienrousseau/knip-config",
+    "./semantic-release": "@sebastienrousseau/semantic-release-config"
+  },
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.cjs",
+    "index.d.ts",
+    "config.svg",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node test/test.js",
+    "lint": "node test/test.js"
+  },
+  "dependencies": {
+    "@sebastienrousseau/browserslist-config": "^1.0.0",
+    "@sebastienrousseau/c8-config": "^1.0.0",
+    "@sebastienrousseau/commitlint-config": "^1.0.0",
+    "@sebastienrousseau/eslint-config": "^1.0.0",
+    "@sebastienrousseau/jsdoc-config": "^1.0.0",
+    "@sebastienrousseau/knip-config": "^1.0.0",
+    "@sebastienrousseau/markdownlint-config": "^1.0.0",
+    "@sebastienrousseau/mocha-config": "^1.0.0",
+    "@sebastienrousseau/prettier-config": "^1.0.0",
+    "@sebastienrousseau/remark-config": "^1.0.0",
+    "@sebastienrousseau/semantic-release-config": "^1.0.0",
+    "@sebastienrousseau/stylelint-config": "^1.0.0",
+    "@sebastienrousseau/tsconfig-config": "^1.0.0",
+    "@sebastienrousseau/vitest-config": "^1.0.0"
+  }
+}
