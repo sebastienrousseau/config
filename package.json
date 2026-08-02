@@ -1,7 +1,7 @@
 {
   "name": "@sebastienrousseau/config",
   "version": "1.0.0",
-  "description": "Master configuration suite providing standardized ESLint, Prettier, TypeScript, Vitest, Stylelint, Markdownlint, Commitlint, Remark, c8, JSDoc, Mocha, Browserslist, Knip, and Semantic-Release rules",
+  "description": "Master configuration suite providing 21 standardized lint, format, coverage, build, test, container, and release configurations",
   "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
   "license": "ISC",
   "homepage": "https://github.com/sebastienrousseau/config#readme",
@@ -38,20 +38,27 @@
       "import": "./index.mjs",
       "require": "./index.cjs"
     },
+    "./browserslist": "@sebastienrousseau/browserslist-config",
+    "./c8": "@sebastienrousseau/c8-config",
+    "./commitlint": "@sebastienrousseau/commitlint-config",
     "./eslint": "@sebastienrousseau/eslint-config",
+    "./jsdoc": "@sebastienrousseau/jsdoc-config",
+    "./knip": "@sebastienrousseau/knip-config",
+    "./markdownlint": "@sebastienrousseau/markdownlint-config",
+    "./mocha": "@sebastienrousseau/mocha-config",
     "./prettier": "@sebastienrousseau/prettier-config",
+    "./remark": "@sebastienrousseau/remark-config",
+    "./semantic-release": "@sebastienrousseau/semantic-release-config",
+    "./stylelint": "@sebastienrousseau/stylelint-config",
     "./tsconfig": "@sebastienrousseau/tsconfig-config",
     "./vitest": "@sebastienrousseau/vitest-config",
-    "./stylelint": "@sebastienrousseau/stylelint-config",
-    "./commitlint": "@sebastienrousseau/commitlint-config",
-    "./markdownlint": "@sebastienrousseau/markdownlint-config",
-    "./remark": "@sebastienrousseau/remark-config",
-    "./c8": "@sebastienrousseau/c8-config",
-    "./jsdoc": "@sebastienrousseau/jsdoc-config",
-    "./mocha": "@sebastienrousseau/mocha-config",
-    "./browserslist": "@sebastienrousseau/browserslist-config",
-    "./knip": "@sebastienrousseau/knip-config",
-    "./semantic-release": "@sebastienrousseau/semantic-release-config"
+    "./biome": "@sebastienrousseau/biome-config",
+    "./tailwindcss": "@sebastienrousseau/tailwindcss-config",
+    "./playwright": "@sebastienrousseau/playwright-config",
+    "./oxlint": "@sebastienrousseau/oxlint-config",
+    "./lefthook": "@sebastienrousseau/lefthook-config",
+    "./size-limit": "@sebastienrousseau/size-limit-config",
+    "./docker": "@sebastienrousseau/docker-config"
   },
   "files": [
     "index.js",
@@ -83,6 +90,13 @@
     "@sebastienrousseau/semantic-release-config": "file:../semantic-release-config",
     "@sebastienrousseau/stylelint-config": "file:../stylelint-config",
     "@sebastienrousseau/tsconfig-config": "file:../tsconfig-config",
-    "@sebastienrousseau/vitest-config": "file:../vitest-config"
+    "@sebastienrousseau/vitest-config": "file:../vitest-config",
+    "@sebastienrousseau/biome-config": "file:../biome-config",
+    "@sebastienrousseau/tailwindcss-config": "file:../tailwindcss-config",
+    "@sebastienrousseau/playwright-config": "file:../playwright-config",
+    "@sebastienrousseau/oxlint-config": "file:../oxlint-config",
+    "@sebastienrousseau/lefthook-config": "file:../lefthook-config",
+    "@sebastienrousseau/size-limit-config": "file:../size-limit-config",
+    "@sebastienrousseau/docker-config": "file:../docker-config"
   }
 }

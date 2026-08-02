@@ -20,5 +20,12 @@ module.exports = {
   semanticRelease: tryRequire("@sebastienrousseau/semantic-release-config", "../semantic-release-config"),
   stylelint: tryRequire("@sebastienrousseau/stylelint-config", "../stylelint-config"),
   tsconfig: tryRequire("@sebastienrousseau/tsconfig-config", "../tsconfig-config"),
-  vitest: tryRequire("@sebastienrousseau/vitest-config", "../vitest-config")
+  vitest: tryRequire("@sebastienrousseau/vitest-config", "../vitest-config"),
+  biome: tryRequire("@sebastienrousseau/biome-config", "../biome-config"),
+  tailwindcss: tryRequire("@sebastienrousseau/tailwindcss-config", "../tailwindcss-config"),
+  playwright: tryRequire("@sebastienrousseau/playwright-config", "../playwright-config"),
+  oxlint: tryRequire("@sebastienrousseau/oxlint-config", "../oxlint-config"),
+  lefthook: tryRequire("@sebastienrousseau/lefthook-config", "../lefthook-config"),
+  sizeLimit: tryRequire("@sebastienrousseau/size-limit-config", "../size-limit-config"),
+  docker: tryRequire("@sebastienrousseau/docker-config", "../docker-config")
 };
