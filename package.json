@@ -1,6 +1,6 @@
 {
   "name": "@sebastienrousseau/config",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Master configuration suite providing 21 standardized lint, format, coverage, build, test, container, and release configurations",
   "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
   "license": "ISC",
