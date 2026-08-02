@@ -7,7 +7,7 @@
 <h1 align="center">@sebastienrousseau/config</h1>
 
 <p align="center">
-  The master configuration suite providing 14 standardized lint, format, coverage, build, test, and release configurations in a single package.
+  The master configuration suite providing 21 standardized lint, format, coverage, build, test, container, and release configurations in a single package.
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 ## Contents
 
 **Getting Started**
-- [Installation](#installation) — Install all 14 configs with a single command
+- [Installation](#installation) — Install all 21 configs with a single command
 - [Quick Start](#quick-start) — Usage examples for all sub-configs
 
 **Configuration Suite Inventory**
@@ -38,7 +38,7 @@
 
 ## Installation
 
-Install the entire configuration suite with a single command:
+Install the entire 21-package configuration suite with a single command:
 
 ```bash
 # npm
@@ -75,11 +75,17 @@ import { tsconfig } from "@sebastienrousseau/config";
 // Vitest
 import { vitest } from "@sebastienrousseau/config";
 export default vitest;
+
+// Biome
+import { biome } from "@sebastienrousseau/config";
+
+// Tailwind CSS
+import { tailwindcss } from "@sebastienrousseau/config";
 ```
 
 ---
 
-## Included Packages
+## Included Packages (21 Configurations)
 
 | Package | Export Subpath | Primary Tool | Description |
 | :--- | :--- | :--- | :--- |
@@ -97,6 +103,13 @@ export default vitest;
 | [`@sebastienrousseau/browserslist-config`](../browserslist-config) | `@sebastienrousseau/config/browserslist` | Browserslist | Modern browser target selection |
 | [`@sebastienrousseau/knip-config`](../knip-config) | `@sebastienrousseau/config/knip` | Knip | Dead code and unused dependency audit |
 | [`@sebastienrousseau/semantic-release-config`](../semantic-release-config) | `@sebastienrousseau/config/semantic-release` | semantic-release | Automated release & changelog rules |
+| [`@sebastienrousseau/biome-config`](../biome-config) | `@sebastienrousseau/config/biome` | Biome | Ultra-fast Rust-based linting and formatting |
+| [`@sebastienrousseau/tailwindcss-config`](../tailwindcss-config) | `@sebastienrousseau/config/tailwindcss` | Tailwind CSS | Theme tokens, typography, and palettes |
+| [`@sebastienrousseau/playwright-config`](../playwright-config) | `@sebastienrousseau/config/playwright` | Playwright | Cross-browser E2E testing settings |
+| [`@sebastienrousseau/oxlint-config`](../oxlint-config) | `@sebastienrousseau/config/oxlint` | Oxlint | Ultra-fast Rust JS/TS linter rules |
+| [`@sebastienrousseau/lefthook-config`](../lefthook-config) | `@sebastienrousseau/config/lefthook` | Lefthook | Parallel git hook execution rules |
+| [`@sebastienrousseau/size-limit-config`](../size-limit-config) | `@sebastienrousseau/config/size-limit` | Size Limit | Performance bundle budget limits |
+| [`@sebastienrousseau/docker-config`](../docker-config) | `@sebastienrousseau/config/docker` | Docker | Multi-stage hardened container builds |
 
 ---
 

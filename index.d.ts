@@ -1,18 +1,25 @@
 export interface MasterConfigSuite {
-  browserslist: string[];
-  c8: Record<string, unknown>;
-  commitlint: Record<string, unknown>;
-  eslint: Record<string, unknown>[];
-  jsdoc: Record<string, unknown>;
-  knip: Record<string, unknown>;
-  markdownlint: Record<string, unknown>;
-  mocha: Record<string, unknown>;
-  prettier: Record<string, unknown>;
-  remark: Record<string, unknown>;
-  semanticRelease: Record<string, unknown>;
-  stylelint: Record<string, unknown>;
-  tsconfig: Record<string, unknown>;
-  vitest: Record<string, unknown>;
+  browserslist: unknown;
+  c8: unknown;
+  commitlint: unknown;
+  eslint: unknown;
+  jsdoc: unknown;
+  knip: unknown;
+  markdownlint: unknown;
+  mocha: unknown;
+  prettier: unknown;
+  remark: unknown;
+  semanticRelease: unknown;
+  stylelint: unknown;
+  tsconfig: unknown;
+  vitest: unknown;
+  biome: unknown;
+  tailwindcss: unknown;
+  playwright: unknown;
+  oxlint: unknown;
+  lefthook: unknown;
+  sizeLimit: unknown;
+  docker: unknown;
 }
 
 declare const configs: MasterConfigSuite;
