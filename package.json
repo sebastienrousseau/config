@@ -1,6 +1,6 @@
 {
   "name": "@sebastienrousseau/config",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Master configuration suite providing 21 standardized lint, format, coverage, build, test, container, and release configurations",
   "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
   "license": "ISC",
@@ -77,26 +77,26 @@
     "lint": "node test/test.js"
   },
   "dependencies": {
+    "@sebastienrousseau/biome-config": "file:../biome-config",
     "@sebastienrousseau/browserslist-config": "file:../browserslist-config",
     "@sebastienrousseau/c8-config": "file:../c8-config",
     "@sebastienrousseau/commitlint-config": "file:../commitlint-config",
+    "@sebastienrousseau/docker-config": "file:../docker-config",
     "@sebastienrousseau/eslint-config": "file:../eslint-config",
     "@sebastienrousseau/jsdoc-config": "file:../jsdoc-config",
     "@sebastienrousseau/knip-config": "file:../knip-config",
+    "@sebastienrousseau/lefthook-config": "file:../lefthook-config",
     "@sebastienrousseau/markdownlint-config": "file:../markdownlint-config",
     "@sebastienrousseau/mocha-config": "file:../mocha-config",
+    "@sebastienrousseau/oxlint-config": "file:../oxlint-config",
+    "@sebastienrousseau/playwright-config": "file:../playwright-config",
     "@sebastienrousseau/prettier-config": "file:../prettier-config",
     "@sebastienrousseau/remark-config": "file:../remark-config",
     "@sebastienrousseau/semantic-release-config": "file:../semantic-release-config",
-    "@sebastienrousseau/stylelint-config": "file:../stylelint-config",
-    "@sebastienrousseau/tsconfig-config": "file:../tsconfig-config",
-    "@sebastienrousseau/vitest-config": "file:../vitest-config",
-    "@sebastienrousseau/biome-config": "file:../biome-config",
-    "@sebastienrousseau/tailwindcss-config": "file:../tailwindcss-config",
-    "@sebastienrousseau/playwright-config": "file:../playwright-config",
-    "@sebastienrousseau/oxlint-config": "file:../oxlint-config",
-    "@sebastienrousseau/lefthook-config": "file:../lefthook-config",
     "@sebastienrousseau/size-limit-config": "file:../size-limit-config",
-    "@sebastienrousseau/docker-config": "file:../docker-config"
+    "@sebastienrousseau/stylelint-config": "file:../stylelint-config",
+    "@sebastienrousseau/tailwindcss-config": "file:../tailwindcss-config",
+    "@sebastienrousseau/tsconfig-config": "file:../tsconfig-config",
+    "@sebastienrousseau/vitest-config": "file:../vitest-config"
   }
 }
