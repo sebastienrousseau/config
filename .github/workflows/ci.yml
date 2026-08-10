@@ -18,4 +18,35 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 20
+
+      # Every entry in `dependencies` is declared as `file:../<name>`,
+      # and `index.cjs` falls back to requiring `../<name>` directly.
+      # Both resolve against the directory *above* this checkout, which
+      # on a runner contains nothing but the checkout itself — so the
+      # first `require` threw and `npm test` had never actually run:
+      #
+      #     Error: Cannot find module '../browserslist-config'
+      #
+      # Publishing the siblings to npm would not fix it either: 13 of
+      # the 21 are not on the registry. Clone them instead, which is
+      # what the `file:../` layout already assumes.
+      #
+      # The list is derived from package.json rather than hard-coded,
+      # so adding or removing a config package needs no change here.
+      - name: Check out the sibling config packages
+        run: |
+          set -euo pipefail
+          parent="$(dirname "$GITHUB_WORKSPACE")"
+          node -e "console.log(Object.keys(require('./package.json').dependencies).map(n => n.split('/').pop()).join('\n'))" > /tmp/siblings.txt
+          count=0
+          while read -r pkg; do
+            [ -n "$pkg" ] || continue
+            if [ -d "$parent/$pkg" ]; then continue; fi
+            git clone --depth 1 --no-tags \
+              "https://github.com/${{ github.repository_owner }}/$pkg.git" \
+              "$parent/$pkg"
+            count=$((count + 1))
+          done < /tmp/siblings.txt
+          echo "cloned $count sibling package(s) into $parent"
+
       - run: npm test
