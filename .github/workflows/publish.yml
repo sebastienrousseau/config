@@ -52,9 +52,6 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Dry-run publish to npmjs
         if: ${{ inputs.dry_run }}
         run: npm publish --access public --dry-run --registry=https://registry.npmjs.org
@@ -84,9 +81,6 @@ jobs:
           node-version: 22
           registry-url: 'https://npm.pkg.github.com'
           scope: '@sebastienrousseau'
-
-      - name: Install dependencies
-        run: npm install
 
       - name: Dry-run publish to GitHub Packages
         if: ${{ inputs.dry_run }}
