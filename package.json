@@ -1,7 +1,7 @@
 {
   "name": "@sebastienrousseau/config",
-  "version": "0.0.2",
-  "description": "Master configuration suite providing 21 standardized lint, format, coverage, build, test, container, and release configurations",
+  "version": "0.0.7",
+  "description": "Master configuration suite aggregating the @sebastienrousseau JavaScript and web tooling configurations",
   "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
   "license": "Apache-2.0 OR MIT",
   "homepage": "https://github.com/sebastienrousseau/config#readme",
@@ -74,7 +74,8 @@
   },
   "scripts": {
     "test": "node test/test.js",
-    "lint": "node test/test.js"
+    "lint": "node test/test.js",
+    "check:family": "node scripts/check-family.mjs"
   },
   "dependencies": {
     "@sebastienrousseau/biome-config": "^0.0.3",
@@ -90,13 +91,17 @@
     "@sebastienrousseau/mocha-config": "^0.0.6",
     "@sebastienrousseau/oxlint-config": "^0.0.3",
     "@sebastienrousseau/playwright-config": "^0.0.3",
-    "@sebastienrousseau/prettier-config": "^0.0.5",
-    "@sebastienrousseau/remark-config": "^0.0.4",
+    "@sebastienrousseau/prettier-config": "^0.0.4",
+    "@sebastienrousseau/remark-config": "^0.0.3",
     "@sebastienrousseau/semantic-release-config": "^0.0.5",
     "@sebastienrousseau/size-limit-config": "^0.0.3",
     "@sebastienrousseau/stylelint-config": "^0.0.4",
     "@sebastienrousseau/tailwindcss-config": "^0.0.3",
     "@sebastienrousseau/tsconfig-config": "^0.0.3",
     "@sebastienrousseau/vitest-config": "^0.0.3"
-  }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "sideEffects": false
 }

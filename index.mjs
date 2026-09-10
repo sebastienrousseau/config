@@ -1,31 +1,15 @@
-import browserslist from "@sebastienrousseau/browserslist-config";
-import c8 from "@sebastienrousseau/c8-config";
-import commitlint from "@sebastienrousseau/commitlint-config";
-import eslint from "@sebastienrousseau/eslint-config";
-import jsdoc from "@sebastienrousseau/jsdoc-config";
-import knip from "@sebastienrousseau/knip-config";
-import markdownlint from "@sebastienrousseau/markdownlint-config";
-import mocha from "@sebastienrousseau/mocha-config";
-import prettier from "@sebastienrousseau/prettier-config";
-import remark from "@sebastienrousseau/remark-config";
-import semanticRelease from "@sebastienrousseau/semantic-release-config";
-import stylelint from "@sebastienrousseau/stylelint-config";
-import tsconfig from "@sebastienrousseau/tsconfig-config";
-import vitest from "@sebastienrousseau/vitest-config";
+// SPDX-FileCopyrightText: 2026 Sebastien Rousseau <sebastian.rousseau@gmail.com>
+// SPDX-License-Identifier: Apache-2.0 OR MIT
 
-export default {
-  browserslist,
-  c8,
-  commitlint,
-  eslint,
-  jsdoc,
-  knip,
-  markdownlint,
-  mocha,
-  prettier,
-  remark,
-  semanticRelease,
-  stylelint,
-  tsconfig,
-  vitest,
-};
+/**
+ * ESM entrypoint.
+ *
+ * The suite is assembled once, in `index.cjs`, and re-exported here so the two
+ * module systems cannot drift apart. Until 0.0.7 this file listed its imports
+ * by hand and had fallen seven packages behind `index.cjs`, so `import` and
+ * `require` returned different objects.
+ */
+
+import suite from "./index.cjs";
+
+export default suite;
