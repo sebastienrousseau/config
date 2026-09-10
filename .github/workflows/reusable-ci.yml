@@ -251,26 +251,30 @@ jobs:
 
       # An install snippet that names a version nobody checks is how a README
       # starts lying. Snippets are unversioned today; this keeps it that way,
-      # or makes a versioned one agree with the manifest.
+      # or makes a versioned one agree with the manifest. Written in node
+      # rather than shell: the pattern needs quotes and backticks, and those
+      # do not survive being nested through YAML into bash.
       - name: Documented versions match the manifest
         shell: bash
         run: |
           set -euo pipefail
-          version="$(node -p "require('./package.json').version")"
-          name="$(node -p "require('./package.json').name")"
-          bad=0
-          while IFS= read -r line; do
-            case "${line}" in
-              *"${name}@"*)
-                claimed="${line##*"${name}@"}"
-                claimed="${claimed%%[\"'"'"' )\`]*}"
-                if [ -n "${claimed}" ] && [ "${claimed}" != "${version}" ] && [ "${claimed}" != "latest" ]; then
-                  echo "::error::README installs ${name}@${claimed} but the manifest says ${version}"
-                  bad=1
-                fi ;;
-            esac
-          done < <(grep -n "${name}@" README.md || true)
-          [ "${bad}" -eq 0 ] && echo "documented versions agree with ${name}@${version}"
+          node -e '
+            const fs = require("node:fs");
+            const pkg = require(process.cwd() + "/package.json");
+            const readme = fs.readFileSync("README.md", "utf8");
+            const escaped = pkg.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const re = new RegExp(escaped + "@([0-9][^\\s\"\x27`)\\]]*)", "g");
+            const bad = [];
+            for (const m of readme.matchAll(re)) {
+              if (m[1] !== pkg.version) bad.push(m[1]);
+            }
+            for (const v of bad) {
+              console.log("::error::README installs " + pkg.name + "@" + v +
+                          " but the manifest says " + pkg.version);
+            }
+            if (bad.length) process.exit(1);
+            console.log("documented versions agree with " + pkg.name + "@" + pkg.version);
+          '
 
       - name: Check spelling
         uses: codespell-project/actions-codespell@e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a # v2.4.3
