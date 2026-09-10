@@ -232,7 +232,9 @@ jobs:
       - name: Check spelling
         uses: codespell-project/actions-codespell@e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a # v2.4.3
         with:
-          ignore_words_list: crate,ser,strat,afterAll,doubleClick
+          # errorprone is PMD's own category name (category/java/errorprone.xml);
+          # spelling it "error-prone" would point the ruleset at nothing.
+          ignore_words_list: crate,ser,strat,afterAll,doubleClick,errorprone
           skip: ./node_modules,./package-lock.json,./KEYS.asc,./web,./public
 
       - name: Set up Node.js
