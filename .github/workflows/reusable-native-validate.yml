@@ -44,6 +44,10 @@ jobs:
           ext="c"
           [ "${{ inputs.language }}" = "cpp" ] && ext="cpp"
           printf 'int main(void) {\n  return 0;\n}\n' > "probe.${ext}"
+          # Format with the preset, then check: the question is whether the
+          # configuration is accepted and settles, not whether a hand-written
+          # probe happens to match its indent width.
+          clang-format --style=file:.clang-format -i "probe.${ext}"
           clang-format --style=file:.clang-format --dry-run --Werror "probe.${ext}"
           clang-tidy --config-file=.clang-tidy "probe.${ext}" -- -std=c11 2>&1 | tee tidy.log
           if grep -qi 'error: unknown\|Error parsing' tidy.log; then
@@ -66,7 +70,7 @@ jobs:
             </PropertyGroup>
           </Project>
           CSPROJ
-          printf 'class P { static void Main() { } }\n' > Program.cs
+          printf 'internal sealed class P { private static void Main() { } }\n' > Program.cs
           # Restore evaluates Directory.Build.props; a malformed or invalid file
           # fails here rather than silently at some later build.
           dotnet restore probe.csproj
@@ -87,6 +91,8 @@ jobs:
           name: probe
           environment:
             sdk: '>=3.0.0 <4.0.0'
+          dev_dependencies:
+            lints: ^5.0.0
           PUBSPEC
           printf 'int answer() => 1;\n' > lib/probe.dart
           dart pub get
@@ -112,7 +118,7 @@ jobs:
           GOMOD
           printf 'package probe\n\nfunc Answer() int { return 1 }\n' > probe.go
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-            | sh -s -- -b "$(go env GOPATH)/bin" v1.64.8
+            | sh -s -- -b "$(go env GOPATH)/bin" v2.13.2
           # `config verify` validates the file against the tool's own schema.
           "$(go env GOPATH)/bin/golangci-lint" config verify --config .golangci.yml
 
@@ -153,9 +159,15 @@ jobs:
           unzip -q detekt.zip
           mkdir -p probe
           printf 'package probe\n\nfun answer(): Int = 1\n' > probe/Probe.kt
+          # The preset configures the `formatting` ruleset, which ships in
+          # detekt-formatting rather than the CLI. Without the plugin on the
+          # path detekt reports the whole section as a misspelled property.
+          curl -sSfLo detekt-formatting.jar \
+            https://repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-formatting/1.23.8/detekt-formatting-1.23.8.jar
           # --config makes detekt parse and validate the file; an unknown rule or
           # malformed YAML fails here.
-          ./detekt-cli-1.23.8/bin/detekt-cli --config detekt.yml --input probe
+          ./detekt-cli-1.23.8/bin/detekt-cli \
+            --config detekt.yml --plugins detekt-formatting.jar --input probe
 
       # ------------------------------------------------------------------ Lua
       - name: Validate luacheck and StyLua configuration
@@ -170,6 +182,7 @@ jobs:
           curl -sSfLo stylua.zip \
             https://github.com/JohnnyMorganz/StyLua/releases/download/v2.0.2/stylua-linux-x86_64.zip
           unzip -q stylua.zip && chmod +x stylua
+          ./stylua --config-path stylua.toml probe.lua
           ./stylua --config-path stylua.toml --check probe.lua
 
       # ------------------------------------------------------------------ PHP
@@ -186,6 +199,9 @@ jobs:
           set -euo pipefail
           mkdir -p probe
           printf '<?php\n\nfunction answer(): int\n{\n    return 1;\n}\n' > probe/Probe.php
+          cat > composer.json <<'JSON'
+          { "require": { "php": ">=8.3" } }
+          JSON
           PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --config .php-cs-fixer.php --dry-run --diff
           phpstan analyse --configuration phpstan.neon --no-progress probe || true
           # A malformed neon file fails phpstan before analysis; distinguish that.
@@ -220,8 +236,9 @@ jobs:
           set -euo pipefail
           Rscript -e 'install.packages("lintr", repos="https://cloud.r-project.org", quiet=TRUE)'
           printf 'answer <- function() {\n  1\n}\n' > probe.R
-          # read_settings parses .lintr; a malformed file raises here.
-          Rscript -e 'lintr::read_settings("."); print(lintr::lint("probe.R"))'
+          # lint() loads .lintr from the working directory; a malformed file
+          # or an unknown linter raises here.
+          Rscript -e 'print(lintr::lint("probe.R"))'
 
       # ----------------------------------------------------------------- Ruby
       - name: Set up Ruby
@@ -261,7 +278,9 @@ jobs:
         run: |
           set -euo pipefail
           printf '#!/usr/bin/env bash\nset -euo pipefail\n\nanswer() {\n  echo 1\n}\n\nanswer\n' > probe.sh
-          shellcheck --rcfile=.shellcheckrc probe.sh
+          curl -sSfL https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz \
+            | tar -xJf - shellcheck-v0.10.0/shellcheck
+          ./shellcheck-v0.10.0/shellcheck --rcfile=.shellcheckrc probe.sh
           curl -sSfLo shfmt https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64
           chmod +x shfmt
           # .shfmt holds CLI flags; feed them through so the file is exercised.

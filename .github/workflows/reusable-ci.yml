@@ -40,6 +40,11 @@ on:
         required: false
         default: '@sebastienrousseau/prettier-config'
         type: string
+      markdownlint-config:
+        description: 'Markdownlint preset to lint documentation against.'
+        required: false
+        default: '@sebastienrousseau/markdownlint-config'
+        type: string
       lint-paths:
         description: 'Paths to lint and format-check.'
         required: false
@@ -230,9 +235,37 @@ jobs:
           ignore_words_list: crate,ser,strat,afterAll,doubleClick
           skip: ./node_modules,./package-lock.json,./KEYS.asc,./web,./public
 
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ fromJSON(inputs.node-versions)[0] }}
+
+      # Without --config, markdownlint-cli2 enforces its own defaults, which
+      # are not the policy this family adopted: 80-column prose and no inline
+      # HTML, neither of which anything else in the toolchain maintains. The
+      # preset ships as a CommonJS module, and the tool only accepts a
+      # configuration file whose name it recognises, so the module is loaded
+      # and written back out as .markdownlint.json.
       - name: Lint Markdown
         shell: bash
+        env:
+          MARKDOWNLINT_CONFIG: ${{ inputs.markdownlint-config }}
         run: |
           set -euo pipefail
+          # A local path means this repository *is* the preset, so it lints
+          # against what it is about to publish rather than the last release.
+          [[ "${MARKDOWNLINT_CONFIG}" == ./* ]] ||
+            npm install --no-save --no-audit --no-fund "${MARKDOWNLINT_CONFIG}"
+          node -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const spec = process.env.MARKDOWNLINT_CONFIG;
+            const preset = require(spec.startsWith("./") ? path.resolve(spec) : spec);
+            fs.writeFileSync(
+              path.join(process.env.RUNNER_TEMP, ".markdownlint.json"),
+              JSON.stringify(preset, null, 2),
+            );
+          '
           npx --yes markdownlint-cli2@0.19.0 \
+            --config "${RUNNER_TEMP}/.markdownlint.json" \
             "**/*.md" "#node_modules" "#web" "#public" "#CHANGELOG.md"
