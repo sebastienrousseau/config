@@ -330,6 +330,7 @@ jobs:
             --accept 200,204,206,429,503
             --exclude-path node_modules --exclude-path web --exclude-path public
             --exclude '^https://registry\.npmjs\.org'
+            --exclude '^https://www\.npmjs\.com'
             './**/*.md'
           fail: true
           jobSummary: false
