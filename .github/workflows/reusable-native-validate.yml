@@ -42,14 +42,18 @@ jobs:
         run: |
           set -euo pipefail
           ext="c"
-          [ "${{ inputs.language }}" = "cpp" ] && ext="cpp"
+          std="c11"
+          if [ "${{ inputs.language }}" = "cpp" ]; then
+            ext="cpp"
+            std="c++20"
+          fi
           printf 'int main(void) {\n  return 0;\n}\n' > "probe.${ext}"
           # Format with the preset, then check: the question is whether the
           # configuration is accepted and settles, not whether a hand-written
           # probe happens to match its indent width.
           clang-format --style=file:.clang-format -i "probe.${ext}"
           clang-format --style=file:.clang-format --dry-run --Werror "probe.${ext}"
-          clang-tidy --config-file=.clang-tidy "probe.${ext}" -- -std=c11 2>&1 | tee tidy.log
+          clang-tidy --config-file=.clang-tidy "probe.${ext}" -- "-std=${std}" 2>&1 | tee tidy.log
           if grep -qi 'error: unknown\|Error parsing' tidy.log; then
             echo "::error::clang-tidy rejected .clang-tidy"
             exit 1
