@@ -45,6 +45,26 @@ on:
         required: false
         default: '@sebastienrousseau/markdownlint-config'
         type: string
+      coverage-node:
+        description: 'Node version the coverage gate runs on; the threshold flags postdate the supported floor.'
+        required: false
+        default: '24'
+        type: string
+      coverage-lines:
+        description: 'Minimum line coverage. Measured at 100 across the family; 95 leaves room for one defensive branch without failing the build.'
+        required: false
+        default: 95
+        type: number
+      coverage-functions:
+        description: 'Minimum function coverage. An uncovered export is an export nobody loads.'
+        required: false
+        default: 95
+        type: number
+      coverage-branches:
+        description: 'Minimum branch coverage. Lower than the others because environment probing cannot be exercised from both sides on one runner.'
+        required: false
+        default: 80
+        type: number
       lint-paths:
         description: 'Paths to lint and format-check.'
         required: false
@@ -229,6 +249,33 @@ jobs:
         with:
           persist-credentials: false
 
+      # An install snippet that names a version nobody checks is how a README
+      # starts lying. Snippets are unversioned today; this keeps it that way,
+      # or makes a versioned one agree with the manifest. Written in node
+      # rather than shell: the pattern needs quotes and backticks, and those
+      # do not survive being nested through YAML into bash.
+      - name: Documented versions match the manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("node:fs");
+            const pkg = require(process.cwd() + "/package.json");
+            const readme = fs.readFileSync("README.md", "utf8");
+            const escaped = pkg.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const re = new RegExp(escaped + "@([0-9][^\\s\"\x27`)\\]]*)", "g");
+            const bad = [];
+            for (const m of readme.matchAll(re)) {
+              if (m[1] !== pkg.version) bad.push(m[1]);
+            }
+            for (const v of bad) {
+              console.log("::error::README installs " + pkg.name + "@" + v +
+                          " but the manifest says " + pkg.version);
+            }
+            if (bad.length) process.exit(1);
+            console.log("documented versions agree with " + pkg.name + "@" + pkg.version);
+          '
+
       - name: Check spelling
         uses: codespell-project/actions-codespell@e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a # v2.4.3
         with:
@@ -271,3 +318,155 @@ jobs:
           npx --yes markdownlint-cli2@0.19.0 \
             --config "${RUNNER_TEMP}/.markdownlint.json" \
             "**/*.md" "#node_modules" "#web" "#public" "#CHANGELOG.md"
+
+      # A documentation set nobody can navigate is not documentation. Offline
+      # first so a flaky remote cannot fail the build on a link that is fine;
+      # remote links are checked too, but 429 and 503 are not our bug.
+      - name: Check documentation links
+        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
+        with:
+          args: >-
+            --no-progress --include-fragments
+            --accept 200,204,206,429,503
+            --exclude-path node_modules --exclude-path web --exclude-path public
+            --exclude '^https://registry\.npmjs\.org'
+            --exclude '^https://www\.npmjs\.com'
+            './**/*.md'
+          fail: true
+          jobSummary: false
+
+  # ---------------------------------------------------------------- Makefile
+  makefile:
+    name: The Makefile still works
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ fromJSON(inputs.node-versions)[0] }}
+
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      # The Makefile is the entry point a contributor reaches for first, and
+      # nothing was exercising it: its targets could rot while the npm scripts
+      # underneath stayed green. `make all` is test + lint.
+      - name: make all
+        run: make all
+
+  # ---------------------------------------------------------------- Coverage
+  coverage:
+    name: Coverage threshold
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The coverage threshold flags postdate the Node floor these packages
+      # support, so coverage runs on the newest Node in the matrix rather than
+      # the oldest. The floor is still tested — by the conformance matrix.
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ inputs.coverage-node }}
+
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      # Why these numbers: a configuration package is a data object plus a
+      # handful of entry points, so line and function coverage should be near
+      # total and anything less means an export nobody loads. Branches are
+      # lower because the only branching is environment probing, which cannot
+      # be exercised from both sides on one runner.
+      # Note the glob rather than `tests/`: passing the directory makes
+      # node --test error and instrument nothing, and the report then shows
+      # 100% of zero files — a gate that always passes.
+      - name: Enforce the coverage threshold
+        shell: bash
+        run: >-
+          node --test
+          --experimental-test-coverage
+          --test-coverage-exclude="tests/**"
+          --test-coverage-exclude="benches/**"
+          --test-coverage-exclude="fuzz/**"
+          --test-coverage-exclude="examples/**"
+          --test-coverage-exclude="scripts/**"
+          --test-coverage-lines=${{ inputs.coverage-lines }}
+          --test-coverage-functions=${{ inputs.coverage-functions }}
+          --test-coverage-branches=${{ inputs.coverage-branches }}
+          tests/*.test.js
+
+  # ----------------------------------------------------------- API breakage
+  api:
+    name: No API breakage since the last release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ fromJSON(inputs.node-versions)[0] }}
+
+      # For a configuration package the public API is the shape of the object
+      # it exports: removing or retyping a key breaks a consumer just as surely
+      # as deleting a function. Compare against what is actually on the
+      # registry, and fail on removals and type changes. Additions are fine.
+      - name: Compare the exported shape against the published release
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          if ! npm view "${name}" version >/dev/null 2>&1; then
+            echo "${name} has no published release yet; nothing to compare"
+            exit 0
+          fi
+          published="$(npm view "${name}" version)"
+          mkdir -p "${RUNNER_TEMP}/baseline" && cd "${RUNNER_TEMP}/baseline"
+          npm pack "${name}@${published}" --silent >/dev/null
+          tar xzf ./*.tgz
+          cd "${GITHUB_WORKSPACE}"
+          node -e '
+            const path = require("node:path");
+            const shape = (o, depth = 0) => {
+              if (o === null || typeof o !== "object" || depth > 2) {
+                return Array.isArray(o) ? "array" : typeof o;
+              }
+              if (Array.isArray(o)) return "array";
+              return Object.fromEntries(
+                Object.keys(o).sort().map((k) => [k, shape(o[k], depth + 1)]),
+              );
+            };
+            const flat = (o, p = "", out = {}) => {
+              for (const [k, v] of Object.entries(o)) {
+                const key = p ? p + "." + k : k;
+                if (v && typeof v === "object") flat(v, key, out);
+                else out[key] = v;
+              }
+              return out;
+            };
+            const before = flat(shape(require(path.join(process.env.RUNNER_TEMP, "baseline", "package", "index.cjs"))));
+            const after = flat(shape(require(path.join(process.cwd(), "index.cjs"))));
+            const removed = Object.keys(before).filter((k) => !(k in after));
+            const retyped = Object.keys(before).filter((k) => k in after && before[k] !== after[k]);
+            for (const k of removed) console.log("::error::removed from the public shape: " + k);
+            for (const k of retyped) console.log("::error::type changed: " + k + " was " + before[k] + ", now " + after[k]);
+            const added = Object.keys(after).filter((k) => !(k in before)).length;
+            if (removed.length || retyped.length) {
+              console.log("breaking: " + removed.length + " removed, " + retyped.length + " retyped");
+              process.exit(1);
+            }
+            console.log("compatible with " + process.env.PUBLISHED + ": " + added + " added, nothing removed or retyped");
+          '
+        env:
+          PUBLISHED: ${{ github.sha }}

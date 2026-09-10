@@ -132,3 +132,30 @@ jobs:
               exit 1
             fi
           done
+
+  provenance:
+    name: Dependency provenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      # The npm answer to the question cargo-vet asks: is every dependency
+      # actually the artifact its registry says it is? This verifies the
+      # registry signature on each installed package, and the provenance
+      # attestation where the publisher supplied one. A tampered or
+      # unsigned-but-claimed package fails here rather than at install time
+      # on a user's machine.
+      - name: Verify registry signatures and attestations
+        run: npm audit signatures
