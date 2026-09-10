@@ -225,7 +225,7 @@ jobs:
           persist-credentials: false
 
       - name: Check spelling
-        uses: codespell-project/actions-codespell@406322ec52dd7b488e09c63cb0ff72d7cbebf4ff # v2.1
+        uses: codespell-project/actions-codespell@e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a # v2.4.3
         with:
           ignore_words_list: crate,ser,strat,afterAll,doubleClick
           skip: ./node_modules,./package-lock.json,./KEYS.asc,./web,./public
