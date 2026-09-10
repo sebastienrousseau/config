@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Sebastien Rousseau <sebastian.rousseau@gmail.com>
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+
 name: CI
 
 on:
@@ -11,42 +14,43 @@ permissions:
 
 jobs:
   test:
-    name: Test & Validate Master Configuration Suite
+    name: Test (node ${{ matrix.node }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest","macos-latest","windows-latest"]
+        node: ["20","22","24"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      - name: Run the test suite
+        run: npm test
+
+  family:
+    name: The family table matches the registry
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22
+          persist-credentials: false
 
-      # Every entry in `dependencies` is declared as `file:../<name>`,
-      # and `index.cjs` falls back to requiring `../<name>` directly.
-      # Both resolve against the directory *above* this checkout, which
-      # on a runner contains nothing but the checkout itself — so the
-      # first `require` threw and `npm test` had never actually run:
-      #
-      #     Error: Cannot find module '../browserslist-config'
-      #
-      # Publishing the siblings to npm would not fix it either: 13 of
-      # the 21 are not on the registry. Clone them instead, which is
-      # what the `file:../` layout already assumes.
-      #
-      # The list is derived from package.json rather than hard-coded,
-      # so adding or removing a config package needs no change here.
-      - name: Check out the sibling config packages
-        run: |
-          set -euo pipefail
-          parent="$(dirname "$GITHUB_WORKSPACE")"
-          node -e "console.log(Object.keys(require('./package.json').dependencies).map(n => n.split('/').pop()).join('\n'))" > /tmp/siblings.txt
-          count=0
-          while read -r pkg; do
-            [ -n "$pkg" ] || continue
-            if [ -d "$parent/$pkg" ]; then continue; fi
-            git clone --depth 1 --no-tags \
-              "https://github.com/${{ github.repository_owner }}/$pkg.git" \
-              "$parent/$pkg"
-            count=$((count + 1))
-          done < /tmp/siblings.txt
-          echo "cloned $count sibling package(s) into $parent"
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '20'
 
-      - run: npm test
+      - name: Check docs/FAMILY.md
+        run: npm run check:family

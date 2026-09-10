@@ -1,0 +1,238 @@
+# SPDX-FileCopyrightText: 2026 Sebastien Rousseau <sebastian.rousseau@gmail.com>
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+
+# Reusable CI for every package in the @sebastienrousseau configuration family.
+#
+# One definition, called by all of them, so a gate added here applies everywhere
+# on the next push instead of needing the same edit in dozens of repositories.
+
+name: Reusable CI
+
+on:
+  workflow_call:
+    inputs:
+      node-versions:
+        description: 'JSON array of Node versions to test. The first entry must be the engines.node floor.'
+        required: false
+        default: '["20", "22", "24"]'
+        type: string
+      os:
+        description: 'JSON array of runner images.'
+        required: false
+        default: '["ubuntu-latest", "macos-latest", "windows-latest"]'
+        type: string
+      validate-command:
+        description: 'Optional npm script that runs the real tool against this configuration.'
+        required: false
+        default: ''
+        type: string
+      eslint-config:
+        description: >-
+          Flat config to lint with. Defaults to the family package; the two
+          repositories that *are* those packages pass their own local file, so
+          they lint against what they are about to publish rather than the
+          previous release.
+        required: false
+        default: '@sebastienrousseau/eslint-config'
+        type: string
+      prettier-config:
+        description: 'Prettier config to check formatting against.'
+        required: false
+        default: '@sebastienrousseau/prettier-config'
+        type: string
+      lint-paths:
+        description: 'Paths to lint and format-check.'
+        required: false
+        default: 'index.cjs index.mjs index.js examples benches fuzz tests'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    name: Conformance (node ${{ matrix.node }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.os) }}
+        node: ${{ fromJSON(inputs.node-versions) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+
+      # `npm ci` fails when package.json and package-lock.json disagree, which is
+      # the gate that keeps the committed lockfile honest.
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      - name: Verify the declared Node floor matches this matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          floor="$(node -p "require('./package.json').engines.node.replace(/[^0-9.]/g, '').split('.')[0]")"
+          echo "engines.node floor: ${floor}"
+          first='${{ fromJSON(inputs.node-versions)[0] }}'
+          if [ "${floor}" != "${first}" ]; then
+            echo "::error::engines.node declares a floor of ${floor} but the matrix starts at ${first}." \
+                 "The README advertises the floor, so CI must prove it."
+            exit 1
+          fi
+
+      - name: Run the conformance suite
+        run: npm test
+
+  validate:
+    name: Real tool accepts the configuration
+    if: inputs.validate-command != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ fromJSON(inputs.node-versions)[0] }}
+
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      - name: Run the tool against this configuration
+        run: npm run ${{ inputs.validate-command }}
+
+  examples:
+    name: Documented examples run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ fromJSON(inputs.node-versions)[0] }}
+
+      - name: Install from the committed lockfile
+        run: npm ci
+
+      # Documentation that is never executed drifts. These are the snippets the
+      # README points at.
+      - name: Run every example
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          found=0
+          for example in examples/*.js examples/*.mjs; do
+            echo "==> ${example}"
+            node "${example}"
+            found=1
+          done
+          if [ "${found}" -eq 0 ]; then
+            echo "::error::no examples found; the README documents this package as having runnable examples"
+            exit 1
+          fi
+
+      - name: Smoke-run the benchmark
+        run: npm run bench
+
+      - name: Smoke-run the fuzz harness
+        run: npm run fuzz
+
+  quality:
+    name: Lint and formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ fromJSON(inputs.node-versions)[0] }}
+
+      # Installed without --save so the manifest and lockfile stay untouched;
+      # these are CI tools, not dependencies of the published package.
+      - name: Install the linters
+        shell: bash
+        env:
+          ESLINT_CONFIG: ${{ inputs.eslint-config }}
+          PRETTIER_CONFIG: ${{ inputs.prettier-config }}
+        run: |
+          set -euo pipefail
+          packages=(eslint@10.10.0 prettier@3.6.2)
+          # A local path means this repository *is* the config package, so it
+          # lints against what it is about to publish rather than the last
+          # release. Anything else is a package name and has to be fetched.
+          [[ "${ESLINT_CONFIG}" == ./* ]] || packages+=("${ESLINT_CONFIG}")
+          [[ "${PRETTIER_CONFIG}" == ./* ]] || packages+=("${PRETTIER_CONFIG}")
+          npm install --no-save --no-audit --no-fund "${packages[@]}"
+
+      - name: Resolve the configuration paths
+        id: configs
+        shell: bash
+        env:
+          ESLINT_CONFIG: ${{ inputs.eslint-config }}
+          PRETTIER_CONFIG: ${{ inputs.prettier-config }}
+        run: |
+          set -euo pipefail
+          resolve() {
+            if [[ "$1" == ./* ]]; then
+              printf '%s' "$1"
+            else
+              node -p "require.resolve('$1')"
+            fi
+          }
+          echo "eslint=$(resolve "${ESLINT_CONFIG}")" >> "${GITHUB_OUTPUT}"
+          echo "prettier=$(resolve "${PRETTIER_CONFIG}")" >> "${GITHUB_OUTPUT}"
+
+      # Zero warnings, not just zero errors: a warning nobody fails on is a
+      # warning nobody reads.
+      - name: Lint at zero warnings
+        run: >-
+          npx eslint --no-config-lookup
+          --config "${{ steps.configs.outputs.eslint }}"
+          --max-warnings 0
+          ${{ inputs.lint-paths }}
+
+      - name: Check formatting
+        run: >-
+          npx prettier --config "${{ steps.configs.outputs.prettier }}"
+          --check ${{ inputs.lint-paths }}
+
+  docs:
+    name: Documentation lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check spelling
+        uses: codespell-project/actions-codespell@406322ec52dd7b488e09c63cb0ff72d7cbebf4ff # v2.1
+        with:
+          ignore_words_list: crate,ser,strat,afterAll,doubleClick
+          skip: ./node_modules,./package-lock.json,./KEYS.asc,./web,./public
+
+      - name: Lint Markdown
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes markdownlint-cli2@0.19.0 \
+            "**/*.md" "#node_modules" "#web" "#public" "#CHANGELOG.md"

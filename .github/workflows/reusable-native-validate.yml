@@ -1,0 +1,314 @@
+# SPDX-FileCopyrightText: 2026 Sebastien Rousseau <sebastian.rousseau@gmail.com>
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+
+# Reusable native-toolchain validation for the language preset packages.
+#
+# These packages ship configuration for toolchains that have nothing to do with
+# npm, so no JavaScript test can tell you whether the preset is actually valid.
+# This workflow installs the real toolchain and points it at the shipped preset
+# over a minimal probe source file.
+#
+# Deliberately minimal probes: the question is "does this tool accept this
+# configuration", not "is this repository's source clean". A probe keeps the two
+# from being confused.
+
+name: Reusable Native Validate
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: 'Which preset family to validate.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: ${{ inputs.language }} toolchain accepts the preset
+    runs-on: ${{ inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # ------------------------------------------------------------------ C / C++
+      - name: Validate clang-format and clang-tidy
+        if: inputs.language == 'c' || inputs.language == 'cpp'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ext="c"
+          [ "${{ inputs.language }}" = "cpp" ] && ext="cpp"
+          printf 'int main(void) {\n  return 0;\n}\n' > "probe.${ext}"
+          clang-format --style=file:.clang-format --dry-run --Werror "probe.${ext}"
+          clang-tidy --config-file=.clang-tidy "probe.${ext}" -- -std=c11 2>&1 | tee tidy.log
+          if grep -qi 'error: unknown\|Error parsing' tidy.log; then
+            echo "::error::clang-tidy rejected .clang-tidy"
+            exit 1
+          fi
+
+      # ------------------------------------------------------------------- C#
+      - name: Validate MSBuild props and OmniSharp settings
+        if: inputs.language == 'csharp'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe && cd probe
+          cp ../Directory.Build.props .
+          cat > probe.csproj <<'CSPROJ'
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <TargetFramework>net8.0</TargetFramework>
+            </PropertyGroup>
+          </Project>
+          CSPROJ
+          printf 'class P { static void Main() { } }\n' > Program.cs
+          # Restore evaluates Directory.Build.props; a malformed or invalid file
+          # fails here rather than silently at some later build.
+          dotnet restore probe.csproj
+          dotnet build probe.csproj --no-restore -warnaserror
+
+      # ----------------------------------------------------------------- Dart
+      - name: Set up Dart
+        if: inputs.language == 'dart'
+        uses: dart-lang/setup-dart@e51d8e571e22473a2ddebf0ef8a2123f0ab2c02c # v1.7.1
+      - name: Validate analysis_options.yaml
+        if: inputs.language == 'dart'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe/lib && cd probe
+          cp ../analysis_options.yaml .
+          cat > pubspec.yaml <<'PUBSPEC'
+          name: probe
+          environment:
+            sdk: '>=3.0.0 <4.0.0'
+          PUBSPEC
+          printf 'int answer() => 1;\n' > lib/probe.dart
+          dart pub get
+          dart analyze --fatal-infos
+
+      # ------------------------------------------------------------------- Go
+      - name: Set up Go
+        if: inputs.language == 'go'
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: stable
+      - name: Validate golangci-lint configuration
+        if: inputs.language == 'go'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe && cd probe
+          cp ../.golangci.yml .
+          cat > go.mod <<'GOMOD'
+          module probe
+
+          go 1.21
+          GOMOD
+          printf 'package probe\n\nfunc Answer() int { return 1 }\n' > probe.go
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b "$(go env GOPATH)/bin" v1.64.8
+          # `config verify` validates the file against the tool's own schema.
+          "$(go env GOPATH)/bin/golangci-lint" config verify --config .golangci.yml
+
+      # ----------------------------------------------------------------- Java
+      - name: Set up Java
+        if: inputs.language == 'java'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Validate Checkstyle and PMD rulesets
+        if: inputs.language == 'java'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe && cd probe
+          printf 'public class Probe {\n  public static void main(String[] a) { }\n}\n' > Probe.java
+          curl -sSfLo checkstyle.jar \
+            https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.21.4/checkstyle-10.21.4-all.jar
+          java -jar checkstyle.jar -c ../checkstyle.xml Probe.java
+          # PMD and SpotBugs rulesets are XML documents with schemas; parse them.
+          python3 -c "import xml.etree.ElementTree as E; E.parse('../pmd-ruleset.xml'); E.parse('../spotbugs-exclude.xml')"
+
+      # --------------------------------------------------------------- Kotlin
+      - name: Set up Java for detekt
+        if: inputs.language == 'kotlin'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Validate detekt configuration
+        if: inputs.language == 'kotlin'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSfLo detekt.zip \
+            https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8.zip
+          unzip -q detekt.zip
+          mkdir -p probe
+          printf 'package probe\n\nfun answer(): Int = 1\n' > probe/Probe.kt
+          # --config makes detekt parse and validate the file; an unknown rule or
+          # malformed YAML fails here.
+          ./detekt-cli-1.23.8/bin/detekt-cli --config detekt.yml --input probe
+
+      # ------------------------------------------------------------------ Lua
+      - name: Validate luacheck and StyLua configuration
+        if: inputs.language == 'lua'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq lua5.4 luarocks
+          sudo luarocks install luacheck
+          printf 'local function answer() return 1 end\nreturn answer\n' > probe.lua
+          luacheck --config .luacheckrc probe.lua
+          curl -sSfLo stylua.zip \
+            https://github.com/JohnnyMorganz/StyLua/releases/download/v2.0.2/stylua-linux-x86_64.zip
+          unzip -q stylua.zip && chmod +x stylua
+          ./stylua --config-path stylua.toml --check probe.lua
+
+      # ------------------------------------------------------------------ PHP
+      - name: Set up PHP
+        if: inputs.language == 'php'
+        uses: shivammathur/setup-php@9e72090525849c5e82e596468b86eb55e9cc5401 # v2.32.0
+        with:
+          php-version: '8.3'
+          tools: php-cs-fixer, phpstan
+      - name: Validate PHP tooling configuration
+        if: inputs.language == 'php'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe
+          printf '<?php\n\nfunction answer(): int\n{\n    return 1;\n}\n' > probe/Probe.php
+          PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --config .php-cs-fixer.php --dry-run --diff
+          phpstan analyse --configuration phpstan.neon --no-progress probe || true
+          # A malformed neon file fails phpstan before analysis; distinguish that.
+          phpstan analyse --configuration phpstan.neon --no-progress --help >/dev/null
+
+      # --------------------------------------------------------------- Python
+      - name: Set up Python
+        if: inputs.language == 'python'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Validate ruff and flake8 configuration
+        if: inputs.language == 'python'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet ruff flake8
+          printf 'def answer() -> int:\n    return 1\n' > probe.py
+          ruff check --config ruff.toml probe.py
+          ruff format --config ruff.toml --check probe.py
+          flake8 --config .flake8 probe.py
+          python3 -c "import tomllib; tomllib.load(open('pyproject.toml','rb'))"
+
+      # -------------------------------------------------------------------- R
+      - name: Set up R
+        if: inputs.language == 'r'
+        uses: r-lib/actions/setup-r@bd49c52ffe281809afa6f0fecbf37483c5dd0b93 # v2.11.3
+      - name: Validate lintr configuration
+        if: inputs.language == 'r'
+        shell: bash
+        run: |
+          set -euo pipefail
+          Rscript -e 'install.packages("lintr", repos="https://cloud.r-project.org", quiet=TRUE)'
+          printf 'answer <- function() {\n  1\n}\n' > probe.R
+          # read_settings parses .lintr; a malformed file raises here.
+          Rscript -e 'lintr::read_settings("."); print(lintr::lint("probe.R"))'
+
+      # ----------------------------------------------------------------- Ruby
+      - name: Set up Ruby
+        if: inputs.language == 'ruby'
+        uses: ruby/setup-ruby@bb6434c747fa7022e12fa1cae9c0542717d0dc5d # v1.253.0
+        with:
+          ruby-version: '3.3'
+      - name: Validate RuboCop configuration
+        if: inputs.language == 'ruby'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gem install rubocop --no-document --silent
+          printf "# frozen_string_literal: true\n\ndef answer\n  1\nend\n" > probe.rb
+          # An unknown cop or malformed YAML makes RuboCop exit non-zero here.
+          rubocop --config .rubocop.yml --force-exclusion probe.rb
+
+      # ----------------------------------------------------------------- Rust
+      - name: Validate rustfmt and Clippy configuration
+        if: inputs.language == 'rust'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup component add rustfmt clippy
+          cargo new --lib probe >/dev/null
+          cp rustfmt.toml clippy.toml probe/
+          cd probe
+          printf 'pub fn answer() -> i32 {\n    1\n}\n' > src/lib.rs
+          # rustfmt rejects unknown or nightly-only keys in rustfmt.toml.
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+
+      # ---------------------------------------------------------------- Shell
+      - name: Validate ShellCheck and shfmt configuration
+        if: inputs.language == 'shell'
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '#!/usr/bin/env bash\nset -euo pipefail\n\nanswer() {\n  echo 1\n}\n\nanswer\n' > probe.sh
+          shellcheck --rcfile=.shellcheckrc probe.sh
+          curl -sSfLo shfmt https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64
+          chmod +x shfmt
+          # .shfmt holds CLI flags; feed them through so the file is exercised.
+          # shellcheck disable=SC2046
+          ./shfmt $(grep -v '^#' .shfmt | tr '\n' ' ') --diff probe.sh
+
+      # ------------------------------------------------------------------ SQL
+      - name: Set up Python for SQLFluff
+        if: inputs.language == 'sql'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Validate SQLFluff configuration
+        if: inputs.language == 'sql'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet sqlfluff
+          printf 'select 1 as answer\n' > probe.sql
+          sqlfluff lint --config .sqlfluff probe.sql
+          python3 -c "import json; json.load(open('.sql-formatter.json'))"
+
+      # ---------------------------------------------------------------- Swift
+      - name: Validate SwiftLint and SwiftFormat configuration
+        if: inputs.language == 'swift'
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install swiftlint swiftformat
+          mkdir -p probe
+          printf 'public func answer() -> Int {\n    return 1\n}\n' > probe/Probe.swift
+          swiftlint lint --config .swiftlint.yml --strict probe
+          swiftformat --config .swiftformat --lint probe
+
+      # ------------------------------------------------------------------ Zig
+      - name: Set up Zig
+        if: inputs.language == 'zig'
+        uses: mlugg/setup-zig@475c97be87a204e6c57fe851f970bd02005a70f0 # v2.0.1
+        with:
+          version: 0.14.0
+      - name: Validate Zig configuration
+        if: inputs.language == 'zig'
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'pub fn answer() i32 {\n    return 1;\n}\n' > probe.zig
+          zig fmt --check probe.zig
+          # build.zig.zon is ZON, and zls.json is JSON; both must parse.
+          python3 -c "import json; json.load(open('zls.json'))"
+          test -s build.zig.zon
