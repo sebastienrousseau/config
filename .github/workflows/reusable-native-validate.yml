@@ -92,7 +92,7 @@ jobs:
           environment:
             sdk: '>=3.0.0 <4.0.0'
           dev_dependencies:
-            lints: ^5.0.0
+            lints: any
           PUBSPEC
           printf 'int answer() => 1;\n' > lib/probe.dart
           dart pub get
@@ -203,10 +203,17 @@ jobs:
           set -euo pipefail
           mkdir -p probe
           printf '<?php\n\nfunction answer(): int\n{\n    return 1;\n}\n' > probe/Probe.php
+          # Not required to pass, but php-cs-fixer warns when it cannot read a
+          # minimum PHP version, and the preset does target 8.3.
           cat > composer.json <<'JSON'
           { "require": { "php": ">=8.3" } }
           JSON
-          PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --config .php-cs-fixer.php --dry-run --diff
+          # The preset enables strict_param, which php-cs-fixer classes as risky
+          # because it changes behaviour rather than layout. A consumer of this
+          # preset has to opt in, so the gate opts in too — otherwise it is
+          # checking a configuration nobody can actually run.
+          PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --config .php-cs-fixer.php \
+            --allow-risky=yes --dry-run --diff
           phpstan analyse --configuration phpstan.neon --no-progress probe || true
           # A malformed neon file fails phpstan before analysis; distinguish that.
           phpstan analyse --configuration phpstan.neon --no-progress --help >/dev/null
