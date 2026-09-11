@@ -497,7 +497,7 @@ jobs:
           dpkg-buildpackage -us -uc -b
           deb="$(find .. -maxdepth 1 -name 'node-sebastienrousseau-*.deb' | head -1)"
           test -n "${deb}"
-          sudo dpkg -i "${deb}"
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$(realpath "${deb}")"
           name="$(node -p "require('./package.json').name")"
           scope="${name%%/*}"
           mkdir -p "${RUNNER_TEMP}/consumer/node_modules/${scope}"
