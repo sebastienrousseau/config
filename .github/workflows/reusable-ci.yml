@@ -495,16 +495,21 @@ jobs:
         run: |
           set -euo pipefail
           name="$(node -p "require('./package.json').name")"
-          cp -r pkg/deb debian
-          chmod +x debian/rules
-          docker run --rm -v "${PWD}:/src" -w /src -e NAME="${name}" debian:stable-slim bash -euc '
+          # Mounted read-only and copied inside: the container runs as root, and
+          # a root-owned debian/ left in the workspace cannot be cleaned up by
+          # the runner user afterwards.
+          docker run --rm -v "${PWD}:/src:ro" -e NAME="${name}" debian:stable-slim bash -euc '
             apt-get update -qq >/dev/null
             DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
               build-essential debhelper dpkg-dev nodejs >/dev/null
+            cp -r /src /build
+            cd /build
+            cp -r pkg/deb debian
+            chmod +x debian/rules
             # dpkg-buildpackage refuses to start without build-essential even
             # though an architecture-independent package compiles nothing.
             dpkg-buildpackage -us -uc -b
-            deb="$(find /  -maxdepth 2 -name "node-sebastienrousseau-*.deb" | head -1)"
+            deb="$(find / -maxdepth 2 -name "node-sebastienrousseau-*.deb" | head -1)"
             test -n "${deb}"
             apt-get install -y -qq "${deb}"
             scope="${NAME%%/*}"
@@ -528,7 +533,6 @@ jobs:
               console.log(\"deb import: ok, \" + Object.keys(cfg).length + \" keys\");
             "
           '
-          rm -rf debian
 
       - name: Build and install the RPM
         shell: bash
