@@ -483,42 +483,51 @@ jobs:
 
       # A packaging recipe that is never built is a recipe that has already
       # drifted. Both are built and then *installed*, and the installed tree is
-      # required from node — the only proof that the paths in docs/packaging.md
+      # loaded from node — the only proof that the paths in docs/packaging.md
       # are the paths the distribution actually resolves.
+      #
+      # Each runs in its own distribution's container rather than on the
+      # runner. That is not fastidiousness: the package declares
+      # nodejs (>= 20), and Ubuntu 24.04 ships Node 18, so the dependency is
+      # unsatisfiable there and apt refuses the install. Debian stable has 20.
       - name: Build and install the Debian package
         shell: bash
         run: |
           set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
           cp -r pkg/deb debian
           chmod +x debian/rules
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-            build-essential debhelper dpkg-dev
-          dpkg-buildpackage -us -uc -b
-          deb="$(find .. -maxdepth 1 -name 'node-sebastienrousseau-*.deb' | head -1)"
-          test -n "${deb}"
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$(realpath "${deb}")"
-          name="$(node -p "require('./package.json').name")"
-          scope="${name%%/*}"
-          mkdir -p "${RUNNER_TEMP}/consumer/node_modules/${scope}"
-          ln -s "/usr/share/nodejs/${name}" "${RUNNER_TEMP}/consumer/node_modules/${name}"
-          cd "${RUNNER_TEMP}/consumer"
-          node -e '
-            const cfg = require(process.argv[1]);
-            if (typeof cfg !== "object" || cfg === null) {
-              throw new Error("installed package did not load as an object");
-            }
-            console.log("deb require(): ok, " + Object.keys(cfg).length + " keys");
-          ' "${name}"
-          node --input-type=module -e '
-            const name = process.argv[1];
-            const { default: cfg } = await import(name);
-            if (typeof cfg !== "object" || cfg === null) {
-              throw new Error("installed package did not import as an object");
-            }
-            console.log("deb import: ok, " + Object.keys(cfg).length + " keys");
-          ' "${name}"
-          cd "${GITHUB_WORKSPACE}"
+          docker run --rm -v "${PWD}:/src" -w /src -e NAME="${name}" debian:stable-slim bash -euc '
+            apt-get update -qq >/dev/null
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+              build-essential debhelper dpkg-dev nodejs >/dev/null
+            # dpkg-buildpackage refuses to start without build-essential even
+            # though an architecture-independent package compiles nothing.
+            dpkg-buildpackage -us -uc -b
+            deb="$(find /  -maxdepth 2 -name "node-sebastienrousseau-*.deb" | head -1)"
+            test -n "${deb}"
+            apt-get install -y -qq "${deb}"
+            scope="${NAME%%/*}"
+            mkdir -p /tmp/consumer/node_modules/"${scope}"
+            ln -s /usr/share/nodejs/"${NAME}" /tmp/consumer/node_modules/"${NAME}"
+            cd /tmp/consumer
+            node -e "
+              const cfg = require(process.env.NAME);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not load as an object\");
+              }
+              console.log(\"deb require(): ok, \" + Object.keys(cfg).length + \" keys\");
+            "
+            # NODE_PATH is CommonJS-only — the ESM resolver ignores it — so the
+            # symlink above is what makes this half of the check meaningful.
+            node --input-type=module -e "
+              const { default: cfg } = await import(process.env.NAME);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not import as an object\");
+              }
+              console.log(\"deb import: ok, \" + Object.keys(cfg).length + \" keys\");
+            "
+          '
           rm -rf debian
 
       - name: Build and install the RPM
