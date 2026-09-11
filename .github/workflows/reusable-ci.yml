@@ -448,6 +448,11 @@ jobs:
               );
             };
             const flat = (o, p = "", out = {}) => {
+              // A preset that exports a primitive (a Dockerfile as a string,
+              // say) reaches here as the type name. Iterating that would
+              // compare the word "string" character by character, which is
+              // both meaningless and silently passes.
+              if (typeof o !== "object" || o === null) return { "": o };
               for (const [k, v] of Object.entries(o)) {
                 const key = p ? p + "." + k : k;
                 if (v && typeof v === "object") flat(v, key, out);
@@ -516,21 +521,34 @@ jobs:
             mkdir -p /tmp/consumer/node_modules/"${scope}"
             ln -s /usr/share/nodejs/"${NAME}" /tmp/consumer/node_modules/"${NAME}"
             cd /tmp/consumer
+            # Most presets export an object, but a couple export the contents of
+            # the file they ship (a Dockerfile, a lefthook.yml) as a string.
+            # The assertion is that the installed package loads and is not
+            # empty, not that it has a particular shape.
             node -e "
               const cfg = require(process.env.NAME);
-              if (typeof cfg !== \"object\" || cfg === null) {
-                throw new Error(\"installed package did not load as an object\");
+              if (cfg === null || cfg === undefined) {
+                throw new Error(\"installed package loaded as \" + cfg);
               }
-              console.log(\"deb require(): ok, \" + Object.keys(cfg).length + \" keys\");
+              const size = typeof cfg === \"object\"
+                ? Object.keys(cfg).length + \" keys\"
+                : String(cfg).length + \" chars\";
+              if (typeof cfg === \"string\" && cfg.trim() === \"\") {
+                throw new Error(\"installed package loaded as an empty string\");
+              }
+              console.log(\"deb require(): ok, \" + size);
             "
             # NODE_PATH is CommonJS-only — the ESM resolver ignores it — so the
             # symlink above is what makes this half of the check meaningful.
             node --input-type=module -e "
               const { default: cfg } = await import(process.env.NAME);
-              if (typeof cfg !== \"object\" || cfg === null) {
-                throw new Error(\"installed package did not import as an object\");
+              if (cfg === null || cfg === undefined) {
+                throw new Error(\"installed package imported as \" + cfg);
               }
-              console.log(\"deb import: ok, \" + Object.keys(cfg).length + \" keys\");
+              const size = typeof cfg === \"object\"
+                ? Object.keys(cfg).length + \" keys\"
+                : String(cfg).length + \" chars\";
+              console.log(\"deb import: ok, \" + size);
             "
           '
 
@@ -557,17 +575,23 @@ jobs:
             cd /tmp/consumer
             node -e '
               const cfg = require(process.argv[1]);
-              if (typeof cfg !== \"object\" || cfg === null) {
-                throw new Error(\"installed package did not load as an object\");
+              if (cfg === null || cfg === undefined) {
+                throw new Error(\"installed package loaded as \" + cfg);
               }
-              console.log(\"rpm require(): ok, \" + Object.keys(cfg).length + \" keys\");
+              const size = typeof cfg === \"object\"
+                ? Object.keys(cfg).length + \" keys\"
+                : String(cfg).length + \" chars\";
+              console.log(\"rpm require(): ok, \" + size);
             ' ${name}
             node --input-type=module -e '
               const { default: cfg } = await import(process.argv[1]);
-              if (typeof cfg !== \"object\" || cfg === null) {
-                throw new Error(\"installed package did not import as an object\");
+              if (cfg === null || cfg === undefined) {
+                throw new Error(\"installed package imported as \" + cfg);
               }
-              console.log(\"rpm import: ok, \" + Object.keys(cfg).length + \" keys\");
+              const size = typeof cfg === \"object\"
+                ? Object.keys(cfg).length + \" keys\"
+                : String(cfg).length + \" chars\";
+              console.log(\"rpm import: ok, \" + size);
             ' ${name}
           "
 
@@ -598,3 +622,50 @@ jobs:
             exit 1
           fi
           echo "byte-identical across two packs"
+
+  # ------------------------------------------------------------ Devcontainer
+  devcontainer:
+    name: The devcontainer boots to a working make
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # Building a devcontainer takes minutes, so it runs when something that
+      # could break it changed rather than on every push. That still makes it
+      # a gate: the claim is "boots to a working make", and the only way that
+      # claim goes stale is if one of these files moves.
+      - name: Does anything the devcontainer depends on change?
+        id: changed
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [ -n "${BASE:-}" ]; then
+            range="${BASE}...HEAD"
+          elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            range="HEAD~1...HEAD"
+          else
+            echo "run=true" >> "${GITHUB_OUTPUT}"; exit 0
+          fi
+          if git diff --name-only "${range}" \
+             | grep -qE '^(\.devcontainer/|Makefile$|package\.json$|package-lock\.json$)'; then
+            echo "run=true" >> "${GITHUB_OUTPUT}"
+            echo "devcontainer inputs changed; building it"
+          else
+            echo "run=false" >> "${GITHUB_OUTPUT}"
+            echo "nothing the devcontainer depends on changed"
+          fi
+
+      # `make all` is test plus lint. If the container cannot run that, it has
+      # not booted to a working make whatever else it managed.
+      - name: Boot it and run make
+        if: steps.changed.outputs.run == 'true'
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3
+        with:
+          runCmd: make all
+          push: never
