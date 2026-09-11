@@ -470,3 +470,131 @@ jobs:
           '
         env:
           PUBLISHED: ${{ github.sha }}
+
+  # --------------------------------------------------------------- Packaging
+  packaging:
+    name: Distribution packages build and install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # A packaging recipe that is never built is a recipe that has already
+      # drifted. Both are built and then *installed*, and the installed tree is
+      # loaded from node — the only proof that the paths in docs/packaging.md
+      # are the paths the distribution actually resolves.
+      #
+      # Each runs in its own distribution's container rather than on the
+      # runner. That is not fastidiousness: the package declares
+      # nodejs (>= 20), and Ubuntu 24.04 ships Node 18, so the dependency is
+      # unsatisfiable there and apt refuses the install. Debian stable has 20.
+      - name: Build and install the Debian package
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          # Mounted read-only and copied inside: the container runs as root, and
+          # a root-owned debian/ left in the workspace cannot be cleaned up by
+          # the runner user afterwards.
+          docker run --rm -v "${PWD}:/src:ro" -e NAME="${name}" debian:stable-slim bash -euc '
+            apt-get update -qq >/dev/null
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+              build-essential debhelper dpkg-dev nodejs >/dev/null
+            cp -r /src /build
+            cd /build
+            cp -r pkg/deb debian
+            chmod +x debian/rules
+            # dpkg-buildpackage refuses to start without build-essential even
+            # though an architecture-independent package compiles nothing.
+            dpkg-buildpackage -us -uc -b
+            deb="$(find / -maxdepth 2 -name "node-sebastienrousseau-*.deb" | head -1)"
+            test -n "${deb}"
+            apt-get install -y -qq "${deb}"
+            scope="${NAME%%/*}"
+            mkdir -p /tmp/consumer/node_modules/"${scope}"
+            ln -s /usr/share/nodejs/"${NAME}" /tmp/consumer/node_modules/"${NAME}"
+            cd /tmp/consumer
+            node -e "
+              const cfg = require(process.env.NAME);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not load as an object\");
+              }
+              console.log(\"deb require(): ok, \" + Object.keys(cfg).length + \" keys\");
+            "
+            # NODE_PATH is CommonJS-only — the ESM resolver ignores it — so the
+            # symlink above is what makes this half of the check meaningful.
+            node --input-type=module -e "
+              const { default: cfg } = await import(process.env.NAME);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not import as an object\");
+              }
+              console.log(\"deb import: ok, \" + Object.keys(cfg).length + \" keys\");
+            "
+          '
+
+      - name: Build and install the RPM
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          bare="${name##*/}"
+          scope="${name%%/*}"
+          rpmname="nodejs-sebastienrousseau-${bare}"
+          version="$(node -p "require('./package.json').version")"
+          docker run --rm -v "${PWD}:/src:ro" -w /work fedora:41 bash -euc "
+            dnf install -y -q rpm-build nodejs tar >/dev/null
+            mkdir -p /work/SOURCES /work/SPECS
+            cp -r /src /work/${rpmname}-${version}
+            rm -rf /work/${rpmname}-${version}/node_modules /work/${rpmname}-${version}/.git
+            tar czf /work/SOURCES/${rpmname}-${version}.tar.gz -C /work ${rpmname}-${version}
+            cp /src/pkg/rpm/${rpmname}.spec /work/SPECS/
+            rpmbuild --define '_topdir /work' -bb /work/SPECS/${rpmname}.spec
+            rpm -i /work/RPMS/noarch/${rpmname}-${version}-1*.noarch.rpm
+            mkdir -p /tmp/consumer/node_modules/${scope}
+            ln -s /usr/lib/node_modules/${name} /tmp/consumer/node_modules/${name}
+            cd /tmp/consumer
+            node -e '
+              const cfg = require(process.argv[1]);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not load as an object\");
+              }
+              console.log(\"rpm require(): ok, \" + Object.keys(cfg).length + \" keys\");
+            ' ${name}
+            node --input-type=module -e '
+              const { default: cfg } = await import(process.argv[1]);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not import as an object\");
+              }
+              console.log(\"rpm import: ok, \" + Object.keys(cfg).length + \" keys\");
+            ' ${name}
+          "
+
+      - name: Lint the AUR PKGBUILD
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq --no-install-recommends shellcheck
+          # PKGBUILDs have no shebang and rely on makepkg-provided globals.
+          shellcheck -s bash -e SC2034,SC2154,SC2148 pkg/aur/PKGBUILD
+
+      # The standard allows a reproducible-builds claim only once it has been
+      # verified. docs/packaging.md makes the claim, so this is the check that
+      # entitles it to.
+      - name: The tarball is reproducible
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/r1" "${RUNNER_TEMP}/r2"
+          (cd "${RUNNER_TEMP}/r1" && npm pack "${GITHUB_WORKSPACE}" --silent >/dev/null)
+          (cd "${RUNNER_TEMP}/r2" && npm pack "${GITHUB_WORKSPACE}" --silent >/dev/null)
+          a="$(sha256sum "${RUNNER_TEMP}"/r1/*.tgz | cut -d" " -f1)"
+          b="$(sha256sum "${RUNNER_TEMP}"/r2/*.tgz | cut -d" " -f1)"
+          echo "pack 1: ${a}"
+          echo "pack 2: ${b}"
+          if [ "${a}" != "${b}" ]; then
+            echo "::error::npm pack is not reproducible; docs/packaging.md claims it is"
+            exit 1
+          fi
+          echo "byte-identical across two packs"
