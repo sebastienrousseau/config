@@ -470,3 +470,118 @@ jobs:
           '
         env:
           PUBLISHED: ${{ github.sha }}
+
+  # --------------------------------------------------------------- Packaging
+  packaging:
+    name: Distribution packages build and install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # A packaging recipe that is never built is a recipe that has already
+      # drifted. Both are built and then *installed*, and the installed tree is
+      # required from node — the only proof that the paths in docs/packaging.md
+      # are the paths the distribution actually resolves.
+      - name: Build and install the Debian package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -r pkg/deb debian
+          chmod +x debian/rules
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            build-essential debhelper dpkg-dev
+          dpkg-buildpackage -us -uc -b
+          deb="$(find .. -maxdepth 1 -name 'node-sebastienrousseau-*.deb' | head -1)"
+          test -n "${deb}"
+          sudo dpkg -i "${deb}"
+          name="$(node -p "require('./package.json').name")"
+          scope="${name%%/*}"
+          mkdir -p "${RUNNER_TEMP}/consumer/node_modules/${scope}"
+          ln -s "/usr/share/nodejs/${name}" "${RUNNER_TEMP}/consumer/node_modules/${name}"
+          cd "${RUNNER_TEMP}/consumer"
+          node -e '
+            const cfg = require(process.argv[1]);
+            if (typeof cfg !== "object" || cfg === null) {
+              throw new Error("installed package did not load as an object");
+            }
+            console.log("deb require(): ok, " + Object.keys(cfg).length + " keys");
+          ' "${name}"
+          node --input-type=module -e '
+            const name = process.argv[1];
+            const { default: cfg } = await import(name);
+            if (typeof cfg !== "object" || cfg === null) {
+              throw new Error("installed package did not import as an object");
+            }
+            console.log("deb import: ok, " + Object.keys(cfg).length + " keys");
+          ' "${name}"
+          cd "${GITHUB_WORKSPACE}"
+          rm -rf debian
+
+      - name: Build and install the RPM
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          bare="${name##*/}"
+          scope="${name%%/*}"
+          rpmname="nodejs-sebastienrousseau-${bare}"
+          version="$(node -p "require('./package.json').version")"
+          docker run --rm -v "${PWD}:/src:ro" -w /work fedora:41 bash -euc "
+            dnf install -y -q rpm-build nodejs tar >/dev/null
+            mkdir -p /work/SOURCES /work/SPECS
+            cp -r /src /work/${rpmname}-${version}
+            rm -rf /work/${rpmname}-${version}/node_modules /work/${rpmname}-${version}/.git
+            tar czf /work/SOURCES/${rpmname}-${version}.tar.gz -C /work ${rpmname}-${version}
+            cp /src/pkg/rpm/${rpmname}.spec /work/SPECS/
+            rpmbuild --define '_topdir /work' -bb /work/SPECS/${rpmname}.spec
+            rpm -i /work/RPMS/noarch/${rpmname}-${version}-1*.noarch.rpm
+            mkdir -p /tmp/consumer/node_modules/${scope}
+            ln -s /usr/lib/node_modules/${name} /tmp/consumer/node_modules/${name}
+            cd /tmp/consumer
+            node -e '
+              const cfg = require(process.argv[1]);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not load as an object\");
+              }
+              console.log(\"rpm require(): ok, \" + Object.keys(cfg).length + \" keys\");
+            ' ${name}
+            node --input-type=module -e '
+              const { default: cfg } = await import(process.argv[1]);
+              if (typeof cfg !== \"object\" || cfg === null) {
+                throw new Error(\"installed package did not import as an object\");
+              }
+              console.log(\"rpm import: ok, \" + Object.keys(cfg).length + \" keys\");
+            ' ${name}
+          "
+
+      - name: Lint the AUR PKGBUILD
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq --no-install-recommends shellcheck
+          # PKGBUILDs have no shebang and rely on makepkg-provided globals.
+          shellcheck -s bash -e SC2034,SC2154,SC2148 pkg/aur/PKGBUILD
+
+      # The standard allows a reproducible-builds claim only once it has been
+      # verified. docs/packaging.md makes the claim, so this is the check that
+      # entitles it to.
+      - name: The tarball is reproducible
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/r1" "${RUNNER_TEMP}/r2"
+          (cd "${RUNNER_TEMP}/r1" && npm pack "${GITHUB_WORKSPACE}" --silent >/dev/null)
+          (cd "${RUNNER_TEMP}/r2" && npm pack "${GITHUB_WORKSPACE}" --silent >/dev/null)
+          a="$(sha256sum "${RUNNER_TEMP}"/r1/*.tgz | cut -d" " -f1)"
+          b="$(sha256sum "${RUNNER_TEMP}"/r2/*.tgz | cut -d" " -f1)"
+          echo "pack 1: ${a}"
+          echo "pack 2: ${b}"
+          if [ "${a}" != "${b}" ]; then
+            echo "::error::npm pack is not reproducible; docs/packaging.md claims it is"
+            exit 1
+          fi
+          echo "byte-identical across two packs"
