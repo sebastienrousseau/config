@@ -146,8 +146,12 @@
   },
   "scripts": {
     "test": "node test/test.js && node test/exports.test.js && node test/optional-peers.test.js && node test/esm.test.mjs",
-    "lint": "node test/test.js",
-    "check:family": "node scripts/check-family.mjs"
+    "lint": "npm run lint:js && npm run lint:format && npm run lint:types && npm run lint:md",
+    "check:family": "node scripts/check-family.mjs",
+    "lint:js": "eslint --max-warnings 0 .",
+    "lint:format": "prettier --check \"**/*.{js,cjs,mjs,ts,mts}\"",
+    "lint:types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext index.d.ts index.d.mts presets/preset.d.ts",
+    "lint:md": "node scripts/lint-markdown.mjs"
   },
   "dependencies": {
     "@sebastienrousseau/biome-config": "^0.0.7",

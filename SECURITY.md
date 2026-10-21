@@ -9,4 +9,4 @@
 
 ## Reporting a Vulnerability
 
-Submit a private advisory at https://github.com/sebastienrousseau/config/security/advisories/new or contact `sebastienrousseau@users.noreply.github.com`.
+Submit a private advisory at <https://github.com/sebastienrousseau/config/security/advisories/new> or contact `sebastienrousseau@users.noreply.github.com`.
