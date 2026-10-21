@@ -151,7 +151,8 @@
     "lint:js": "eslint --max-warnings 0 .",
     "lint:format": "prettier --check \"**/*.{js,cjs,mjs,ts,mts}\"",
     "lint:types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext index.d.ts index.d.mts presets/preset.d.ts",
-    "lint:md": "node scripts/lint-markdown.mjs"
+    "lint:md": "node scripts/lint-markdown.mjs",
+    "demo": "vhs .github/demo.tape"
   },
   "dependencies": {
     "@sebastienrousseau/biome-config": "^0.0.7",

@@ -1,168 +1,276 @@
 <!-- SPDX-License-Identifier: Apache-2.0 OR MIT -->
 
 <p align="center">
-  <img src="./config.svg" alt="config logo" width="128" />
+  <img src="./config.svg" alt="@sebastienrousseau/config logo" width="128" />
 </p>
 
 <h1 align="center">@sebastienrousseau/config</h1>
 
 <p align="center">
-  The master configuration suite providing 21 standardized lint, format, coverage, build, test, container, and release configurations in a single package.
+  One install for the @sebastienrousseau lint, format, test, coverage, build, container and release presets, with every preset reachable by name or by subpath.
 </p>
 
 <p align="center">
-  <a href="https://github.com/sebastienrousseau/config/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/config/ci.yml?branch=main&style=for-the-badge&logo=github" alt="Build Status" /></a>
-  <a href="https://www.npmjs.com/package/@sebastienrousseau/config"><img src="https://img.shields.io/npm/v/@sebastienrousseau%2Fconfig?style=for-the-badge&color=fc8d62&logo=npm" alt="npm package" /></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/config"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/config?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" /></a>
-  <a href="LICENSE-APACHE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg?style=for-the-badge" alt="License: Apache-2.0 OR MIT" /></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/node->=%2020.0.0-93450a.svg?style=for-the-badge&logo=node.js" alt="Node >= 20.0.0" /></a>
+  <a href="https://github.com/sebastienrousseau/config/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/config/ci.yml?style=for-the-badge&logo=github" alt="Build" height="28" /></a>
+  <a href="https://www.npmjs.com/package/@sebastienrousseau/config"><img src="https://img.shields.io/npm/v/@sebastienrousseau%2Fconfig?style=for-the-badge&color=fc8d62&logo=npm" alt="Registry" height="28" /></a>
+  <a href="docs/FAMILY.md"><img src="https://img.shields.io/badge/docs-family-blue?style=for-the-badge&labelColor=555555&logo=markdown" alt="Docs" height="28" /></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/config"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/config?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" height="28" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg?style=for-the-badge" alt="License: Apache-2.0 OR MIT" height="28" /></a>
+  <a href="https://github.com/sebastienrousseau/config/blob/main/docs/POLICIES.md"><img src="https://img.shields.io/badge/node-%3E%3D20-93450a.svg?style=for-the-badge&logo=node.js" alt="Node 20 or newer" height="28" /></a>
+</p>
+
+<p align="center">
+  <img src=".github/demo.gif" alt="Terminal demo: named ESM imports and a subpath import of the presets, the error an uninstalled optional peer raises, and the test suite passing" width="100%" />
 </p>
 
 ---
 
 ## Contents
 
-**Getting Started**
-- [Installation](#installation) — Install all 21 configs with a single command
-- [Quick Start](#quick-start) — Usage examples for all sub-configs
+**Getting started**
 
-**Configuration Suite Inventory**
-- [Included Packages](#included-packages-21-configurations) — Complete list of re-exported configs
-- [Module Compatibility](#module-compatibility) — Dual CJS/ESM & TypeScript support
+- [Install](#install) — npm, pnpm, yarn or bun, plus the two optional peers
+- [Requirements](#requirements) — Node 20 or newer
+- [Quick Start](#quick-start) — import a preset and use it
 
-**Governance & Quality**
-- [Development & Testing](#development--testing) — Local validation
-- [Security & Compliance](#security--compliance) — SLSA attestation & vulnerability policy
-- [Author & License](#author--license) — Open source license
+**The @sebastienrousseau/config ecosystem**
+
+- [The @sebastienrousseau/config ecosystem](#the-sebastienrousseauconfig-ecosystem) — the 21 presets it aggregates
+
+**Library reference**
+
+- [Capabilities at a glance](#capabilities-at-a-glance) — the current surface by theme
+- [Ecosystem comparison](#ecosystem-comparison) — not published
+- [Benchmarks](#benchmarks) — not applicable
+- [Features](#features) — what the package does
+- [Configuration](#configuration) — optional peers and per-tool wiring
+- [Examples](#examples) — where the runnable examples live
+
+**Operational**
+
+- [When not to use @sebastienrousseau/config](#when-not-to-use-sebastienrousseauconfig) — limitations
+- [Development](#development) — tests, lint, demo, CI
+- [Security](#security) — what is checked and how releases are made
+- [Documentation](#documentation) — all reference docs
+- [Stability guarantees](#stability-guarantees) — versioning and the public surface
+- [License](#license)
 
 ---
 
-## Installation
+## Install
 
-Install the entire 21-package configuration suite with a single command:
+### As a Node.js library
 
 ```bash
-# npm
 npm install --save-dev @sebastienrousseau/config
-
-# pnpm
-pnpm add -D @sebastienrousseau/config
-
-# yarn
-yarn add -D @sebastienrousseau/config
-
-# bun
-bun add -d @sebastienrousseau/config
 ```
 
-The remark and semantic-release presets are optional peers: they bring
-whole toolchains (remark-cli, semantic-release and the npm CLI it bundles),
-so the suite does not install them. Add the ones you use:
+The same package installs with `pnpm add -D`, `yarn add -D` or `bun add -d`.
+
+The remark and semantic-release presets are optional peers. They bring whole
+toolchains (remark-cli, semantic-release and the npm CLI it bundles), so the
+suite does not install them. Add the ones you use:
 
 ```bash
 npm install --save-dev @sebastienrousseau/remark-config @sebastienrousseau/semantic-release-config
 ```
 
-Reading `suite.remark` or `suite.semanticRelease` without the package
-installed throws an error that names the install command.
+---
+
+## Requirements
+
+Node.js 20 or newer. CI tests Node 20, 22 and 24 on Linux, macOS and Windows;
+see [`docs/POLICIES.md`](docs/POLICIES.md). Each preset also needs the tool it
+configures. Most presets declare that tool as a peer dependency (ESLint,
+Prettier, Vitest and so on); for Biome, Docker, Lefthook, Oxlint, Playwright,
+Size Limit and Tailwind CSS, install the tool yourself.
 
 ---
 
 ## Quick Start
 
-Import any configuration directly from `@sebastienrousseau/config`:
+```js
+// eslint.config.mjs
+import { eslint } from "@sebastienrousseau/config";
+
+export default [...eslint];
+```
 
 ```js
-// ESLint (Flat Config)
-import { eslint } from "@sebastienrousseau/config";
-export default [...eslint];
-
-// Prettier
-import { prettier } from "@sebastienrousseau/config";
-export default prettier;
-
-// TypeScript Base
-import { tsconfig } from "@sebastienrousseau/config";
-
-// Vitest
-import { vitest } from "@sebastienrousseau/config";
-export default vitest;
-
-// Biome
-import { biome } from "@sebastienrousseau/config";
-
-// Tailwind CSS
-import { tailwindcss } from "@sebastienrousseau/config";
+// prettier.config.mjs
+export { prettier as default } from "@sebastienrousseau/config";
 ```
 
----
+```js
+// CommonJS, or one preset per subpath
+const { vitest } = require("@sebastienrousseau/config");
+const tsconfig = require("@sebastienrousseau/config/tsconfig");
+```
 
-## Included Packages (21 Configurations)
-
-| Package | Export Subpath | Primary Tool | Description |
-| :--- | :--- | :--- | :--- |
-| [`@sebastienrousseau/eslint-config`](../eslint-config) | `@sebastienrousseau/config/eslint` | ESLint v9 | ESLint 9+ Flat Config & legacy rule sets |
-| [`@sebastienrousseau/prettier-config`](../prettier-config) | `@sebastienrousseau/config/prettier` | Prettier v3 | Code formatting rules |
-| [`@sebastienrousseau/tsconfig-config`](../tsconfig-config) | `@sebastienrousseau/config/tsconfig` | TypeScript | Strict compiler options (Base, Node, Web) |
-| [`@sebastienrousseau/vitest-config`](../vitest-config) | `@sebastienrousseau/config/vitest` | Vitest | ESM test runner & V8 coverage rules |
-| [`@sebastienrousseau/stylelint-config`](../stylelint-config) | `@sebastienrousseau/config/stylelint` | Stylelint | CSS and SCSS linting rules |
-| [`@sebastienrousseau/commitlint-config`](../commitlint-config) | `@sebastienrousseau/config/commitlint` | commitlint | Conventional Commits formatting rules |
-| [`@sebastienrousseau/markdownlint-config`](../markdownlint-config) | `@sebastienrousseau/config/markdownlint` | markdownlint | Markdown structure and style checks |
-| [`@sebastienrousseau/remark-config`](../remark-config) | `@sebastienrousseau/config/remark` | Remark | Markdown AST & GFM linting presets (optional peer) |
-| [`@sebastienrousseau/c8-config`](../c8-config) | `@sebastienrousseau/config/c8` | c8 V8 | 100% code coverage threshold rules |
-| [`@sebastienrousseau/jsdoc-config`](../jsdoc-config) | `@sebastienrousseau/config/jsdoc` | JSDoc | API documentation generator settings |
-| [`@sebastienrousseau/mocha-config`](../mocha-config) | `@sebastienrousseau/config/mocha` | Mocha | BDD unit test runner rules |
-| [`@sebastienrousseau/browserslist-config`](../browserslist-config) | `@sebastienrousseau/config/browserslist` | Browserslist | Modern browser target selection |
-| [`@sebastienrousseau/knip-config`](../knip-config) | `@sebastienrousseau/config/knip` | Knip | Dead code and unused dependency audit |
-| [`@sebastienrousseau/semantic-release-config`](../semantic-release-config) | `@sebastienrousseau/config/semantic-release` | semantic-release | Automated release & changelog rules (optional peer) |
-| [`@sebastienrousseau/biome-config`](../biome-config) | `@sebastienrousseau/config/biome` | Biome | Ultra-fast Rust-based linting and formatting |
-| [`@sebastienrousseau/tailwindcss-config`](../tailwindcss-config) | `@sebastienrousseau/config/tailwindcss` | Tailwind CSS | Theme tokens, typography, and palettes |
-| [`@sebastienrousseau/playwright-config`](../playwright-config) | `@sebastienrousseau/config/playwright` | Playwright | Cross-browser E2E testing settings |
-| [`@sebastienrousseau/oxlint-config`](../oxlint-config) | `@sebastienrousseau/config/oxlint` | Oxlint | Ultra-fast Rust JS/TS linter rules |
-| [`@sebastienrousseau/lefthook-config`](../lefthook-config) | `@sebastienrousseau/config/lefthook` | Lefthook | Parallel git hook execution rules |
-| [`@sebastienrousseau/size-limit-config`](../size-limit-config) | `@sebastienrousseau/config/size-limit` | Size Limit | Performance bundle budget limits |
-| [`@sebastienrousseau/docker-config`](../docker-config) | `@sebastienrousseau/config/docker` | Docker | Multi-stage hardened container builds |
+Every required preset is a named export of the package and has its own
+subpath. Each value is the preset package's own default export, unchanged.
 
 ---
 
-## Module Compatibility
+## The @sebastienrousseau/config ecosystem
 
-- `require("@sebastienrousseau/config")` returns the suite object
-  (typed by `index.d.ts`).
-- `import suite from "@sebastienrousseau/config"` returns the same object,
-  and every required preset is also a named export
-  (`import { eslint } from "@sebastienrousseau/config"`), typed by
-  `index.d.mts`. The optional peers are only on the suite object.
-- Each preset has its own subpath, for both `import` and `require`:
-  `@sebastienrousseau/config/eslint`, `@sebastienrousseau/config/size-limit`,
-  and so on, as listed above.
+This package aggregates the 21 JavaScript and web presets of the configuration
+family. [`docs/FAMILY.md`](docs/FAMILY.md) lists all 38 family packages, what
+each exports and what validates it, and CI checks that table against the
+registry.
+
+| Component | Purpose | Use case |
+| :--- | :--- | :--- |
+| [`biome-config`](https://github.com/sebastienrousseau/biome-config) | Biome formatter and linter settings | `config/biome` |
+| [`browserslist-config`](https://github.com/sebastienrousseau/browserslist-config) | Target browser query list | `config/browserslist` |
+| [`c8-config`](https://github.com/sebastienrousseau/c8-config) | Coverage thresholds and reporters | `config/c8` |
+| [`commitlint-config`](https://github.com/sebastienrousseau/commitlint-config) | Conventional commit rules | `config/commitlint` |
+| [`docker-config`](https://github.com/sebastienrousseau/docker-config) | Hardened container image | `config/docker` |
+| [`eslint-config`](https://github.com/sebastienrousseau/eslint-config) | ESLint flat configuration | `config/eslint` |
+| [`jsdoc-config`](https://github.com/sebastienrousseau/jsdoc-config) | API documentation generation | `config/jsdoc` |
+| [`knip-config`](https://github.com/sebastienrousseau/knip-config) | Unused code and dependency detection | `config/knip` |
+| [`lefthook-config`](https://github.com/sebastienrousseau/lefthook-config) | Git hook definitions | `config/lefthook` |
+| [`markdownlint-config`](https://github.com/sebastienrousseau/markdownlint-config) | Markdown style rules | `config/markdownlint` |
+| [`mocha-config`](https://github.com/sebastienrousseau/mocha-config) | Mocha test runner settings | `config/mocha` |
+| [`oxlint-config`](https://github.com/sebastienrousseau/oxlint-config) | Oxlint rules | `config/oxlint` |
+| [`playwright-config`](https://github.com/sebastienrousseau/playwright-config) | Playwright end-to-end settings | `config/playwright` |
+| [`prettier-config`](https://github.com/sebastienrousseau/prettier-config) | Prettier formatting rules | `config/prettier` |
+| [`remark-config`](https://github.com/sebastienrousseau/remark-config) | Remark Markdown pipeline (optional peer) | `config/remark` |
+| [`semantic-release-config`](https://github.com/sebastienrousseau/semantic-release-config) | Release pipeline and plugins (optional peer) | `config/semantic-release` |
+| [`size-limit-config`](https://github.com/sebastienrousseau/size-limit-config) | Bundle size budgets | `config/size-limit` |
+| [`stylelint-config`](https://github.com/sebastienrousseau/stylelint-config) | CSS and SCSS lint rules | `config/stylelint` |
+| [`tailwindcss-config`](https://github.com/sebastienrousseau/tailwindcss-config) | Tailwind CSS theme | `config/tailwindcss` |
+| [`tsconfig-config`](https://github.com/sebastienrousseau/tsconfig-config) | TypeScript compiler options | `config/tsconfig` |
+| [`vitest-config`](https://github.com/sebastienrousseau/vitest-config) | Vitest runner and coverage settings | `config/vitest` |
+
+The Use case column is the subpath under `@sebastienrousseau/`, for example
+`@sebastienrousseau/config/eslint`.
 
 ---
 
-## Development & Testing
+## Capabilities at a glance
+
+| Area | Capability | Status |
+| :--- | :--- | :--- |
+| CommonJS | `require("@sebastienrousseau/config")` returns the suite object | Since 0.0.2 |
+| ESM | Default export plus a named export per required preset | Since 0.0.7 |
+| Subpaths | `@sebastienrousseau/config/<preset>` for all 21 presets | Since 0.0.7 |
+| TypeScript | `index.d.ts` (CommonJS), `index.d.mts` (ESM), one declaration per subpath | Since 0.0.7 |
+| Optional peers | remark and semantic-release load on first access and name their install command | Since 0.0.7 |
+
+---
+
+## Ecosystem comparison
+
+Not published. No comparison with other configuration bundles has been
+measured, and this README makes no claims it cannot back with evidence.
+
+---
+
+## Benchmarks
+
+Not applicable. The package re-exports configuration objects and runs no code
+at lint, build or test time beyond loading them.
+
+---
+
+## Features
+
+-  One dependency pulls in 19 presets at matching versions; two more are
+    optional peers.
+-  Each preset is reachable three ways: the suite object, a named ESM export,
+    or its own subpath.
+-  An optional peer that is not installed fails on access with the exact
+    `npm install` command, instead of a bare module-not-found error.
+-  The tarball holds only the entrypoints, the one-line preset re-exports,
+    their type declarations, the licence texts, the README and the logo.
+
+---
+
+## Configuration
+
+There is nothing to configure in this package. Each preset is passed to its
+tool as that tool expects; see the preset's own README, linked from the
+ecosystem table. To use the optional presets, install them next to the suite
+(see [Install](#install)); `suite.remark` and `suite.semanticRelease` then
+return them, and so do the `remark` and `semantic-release` subpaths.
+
+---
+
+## Examples
+
+The [Quick Start](#quick-start) snippets are the examples for this package.
+Each preset repository carries runnable examples for its own tool.
+
+---
+
+## When not to use @sebastienrousseau/config
+
+-  You use only one or two presets: install those preset packages directly and
+    skip the other tools' peer dependencies.
+-  You need the presets for a non-JavaScript language (C, Go, Python and the
+    rest of the family): they are separate packages, listed in
+    [`docs/FAMILY.md`](docs/FAMILY.md), and this suite does not include them.
+-  Your project cannot accept the advisories listed under Known issues in
+    [`CHANGELOG.md`](CHANGELOG.md), which arrive through the presets' tools.
+
+---
+
+## Development
 
 ```bash
-# Clone repository
 git clone https://github.com/sebastienrousseau/config.git
 cd config
-
-# Run validation tests
-npm test
+npm ci
+npm test             # entrypoints, subpaths, optional peers, typings
+npm run lint         # ESLint, Prettier, tsc and markdownlint, family presets
+npm run check:family # docs/FAMILY.md against the registry
+npm run demo         # re-render .github/demo.gif with VHS
 ```
 
----
-
-## Security & Compliance
-
-- **SLSA Level 3 Provenance**: Builds are cryptographically signed with keyless provenance via GitHub Actions.
-- **Automated Security Audit**: Monitored continuously with CodeQL and Dependabot.
-- **Commit Signatures**: All commits are SSH/GPG signed.
-- See [SECURITY.md](SECURITY.md) for vulnerability reporting procedures.
+CI runs the tests on Node 20, 22 and 24 across Linux, macOS and Windows, plus
+the lint job, the family check and CodeQL, on every pull request into `main`.
 
 ---
 
-## Author & License
+## Security
 
-Developed and maintained by **[Sebastien Rousseau](https://github.com/sebastienrousseau)**.
+-  Dependabot, CodeQL, OpenSSF Scorecard and secret scanning with push
+    protection are enabled on the repository.
+-  Every commit on `main` is signed, and releases are signed annotated tags.
+-  From 0.0.8, npm releases are staged by `publish.yml` through trusted
+    publishing (OIDC) with provenance, and made public by a maintainer with
+    their second factor. 0.0.7 and earlier were published without provenance.
 
-Released under the [ISC License](LICENSE).
+Report vulnerabilities according to [`SECURITY.md`](SECURITY.md).
+
+---
+
+## Documentation
+
+-  [`CHANGELOG.md`](CHANGELOG.md): changes per release, and known issues.
+-  [`docs/FAMILY.md`](docs/FAMILY.md): every package in the family.
+-  [`docs/POLICIES.md`](docs/POLICIES.md): toolchain, versioning, dependency
+    and release policies.
+-  [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md),
+    [`SECURITY.md`](SECURITY.md).
+
+---
+
+## Stability guarantees
+
+The version is below 0.1.0, so any release may change the public surface; each
+change is listed in [`CHANGELOG.md`](CHANGELOG.md) under the release that makes
+it. The public surface is the suite object, the named ESM exports, the
+subpaths and their type declarations. The family releases in lockstep, so the
+suite's version matches its presets'. The Node floor is in
+[`docs/POLICIES.md`](docs/POLICIES.md).
+
+---
+
+## License
+
+Dual-licensed under [Apache-2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at
+your option. See [`LICENSE`](LICENSE).
+
+Developed by [Sebastien Rousseau](https://sebastienrousseau.com/).
