@@ -34,37 +34,106 @@
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "import": "./index.mjs",
-      "require": "./index.cjs"
+      "import": {
+        "types": "./index.d.mts",
+        "default": "./index.mjs"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./index.cjs"
+      }
     },
-    "./browserslist": "./presets/browserslist.cjs",
-    "./c8": "./presets/c8.cjs",
-    "./commitlint": "./presets/commitlint.cjs",
-    "./eslint": "./presets/eslint.cjs",
-    "./jsdoc": "./presets/jsdoc.cjs",
-    "./knip": "./presets/knip.cjs",
-    "./markdownlint": "./presets/markdownlint.cjs",
-    "./mocha": "./presets/mocha.cjs",
-    "./prettier": "./presets/prettier.cjs",
-    "./remark": "./presets/remark.cjs",
-    "./semantic-release": "./presets/semantic-release.cjs",
-    "./stylelint": "./presets/stylelint.cjs",
-    "./tsconfig": "./presets/tsconfig.cjs",
-    "./vitest": "./presets/vitest.cjs",
-    "./biome": "./presets/biome.cjs",
-    "./tailwindcss": "./presets/tailwindcss.cjs",
-    "./playwright": "./presets/playwright.cjs",
-    "./oxlint": "./presets/oxlint.cjs",
-    "./lefthook": "./presets/lefthook.cjs",
-    "./size-limit": "./presets/size-limit.cjs",
-    "./docker": "./presets/docker.cjs"
+    "./browserslist": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/browserslist.cjs"
+    },
+    "./c8": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/c8.cjs"
+    },
+    "./commitlint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/commitlint.cjs"
+    },
+    "./eslint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/eslint.cjs"
+    },
+    "./jsdoc": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/jsdoc.cjs"
+    },
+    "./knip": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/knip.cjs"
+    },
+    "./markdownlint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/markdownlint.cjs"
+    },
+    "./mocha": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/mocha.cjs"
+    },
+    "./prettier": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/prettier.cjs"
+    },
+    "./remark": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/remark.cjs"
+    },
+    "./semantic-release": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/semantic-release.cjs"
+    },
+    "./stylelint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/stylelint.cjs"
+    },
+    "./tsconfig": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/tsconfig.cjs"
+    },
+    "./vitest": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/vitest.cjs"
+    },
+    "./biome": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/biome.cjs"
+    },
+    "./tailwindcss": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/tailwindcss.cjs"
+    },
+    "./playwright": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/playwright.cjs"
+    },
+    "./oxlint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/oxlint.cjs"
+    },
+    "./lefthook": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/lefthook.cjs"
+    },
+    "./size-limit": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/size-limit.cjs"
+    },
+    "./docker": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/docker.cjs"
+    }
   },
   "files": [
     "index.js",
     "index.mjs",
     "index.cjs",
     "index.d.ts",
+    "index.d.mts",
     "presets/",
     "config.svg",
     "LICENSE",
@@ -74,7 +143,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "node test/test.js && node test/exports.test.js && node test/optional-peers.test.js",
+    "test": "node test/test.js && node test/exports.test.js && node test/optional-peers.test.js && node test/esm.test.mjs",
     "lint": "node test/test.js",
     "check:family": "node scripts/check-family.mjs"
   },
