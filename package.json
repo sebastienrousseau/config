@@ -34,46 +34,118 @@
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "import": "./index.mjs",
-      "require": "./index.cjs"
+      "import": {
+        "types": "./index.d.mts",
+        "default": "./index.mjs"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./index.cjs"
+      }
     },
-    "./browserslist": "@sebastienrousseau/browserslist-config",
-    "./c8": "@sebastienrousseau/c8-config",
-    "./commitlint": "@sebastienrousseau/commitlint-config",
-    "./eslint": "@sebastienrousseau/eslint-config",
-    "./jsdoc": "@sebastienrousseau/jsdoc-config",
-    "./knip": "@sebastienrousseau/knip-config",
-    "./markdownlint": "@sebastienrousseau/markdownlint-config",
-    "./mocha": "@sebastienrousseau/mocha-config",
-    "./prettier": "@sebastienrousseau/prettier-config",
-    "./remark": "@sebastienrousseau/remark-config",
-    "./semantic-release": "@sebastienrousseau/semantic-release-config",
-    "./stylelint": "@sebastienrousseau/stylelint-config",
-    "./tsconfig": "@sebastienrousseau/tsconfig-config",
-    "./vitest": "@sebastienrousseau/vitest-config",
-    "./biome": "@sebastienrousseau/biome-config",
-    "./tailwindcss": "@sebastienrousseau/tailwindcss-config",
-    "./playwright": "@sebastienrousseau/playwright-config",
-    "./oxlint": "@sebastienrousseau/oxlint-config",
-    "./lefthook": "@sebastienrousseau/lefthook-config",
-    "./size-limit": "@sebastienrousseau/size-limit-config",
-    "./docker": "@sebastienrousseau/docker-config"
+    "./browserslist": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/browserslist.cjs"
+    },
+    "./c8": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/c8.cjs"
+    },
+    "./commitlint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/commitlint.cjs"
+    },
+    "./eslint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/eslint.cjs"
+    },
+    "./jsdoc": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/jsdoc.cjs"
+    },
+    "./knip": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/knip.cjs"
+    },
+    "./markdownlint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/markdownlint.cjs"
+    },
+    "./mocha": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/mocha.cjs"
+    },
+    "./prettier": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/prettier.cjs"
+    },
+    "./remark": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/remark.cjs"
+    },
+    "./semantic-release": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/semantic-release.cjs"
+    },
+    "./stylelint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/stylelint.cjs"
+    },
+    "./tsconfig": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/tsconfig.cjs"
+    },
+    "./vitest": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/vitest.cjs"
+    },
+    "./biome": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/biome.cjs"
+    },
+    "./tailwindcss": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/tailwindcss.cjs"
+    },
+    "./playwright": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/playwright.cjs"
+    },
+    "./oxlint": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/oxlint.cjs"
+    },
+    "./lefthook": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/lefthook.cjs"
+    },
+    "./size-limit": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/size-limit.cjs"
+    },
+    "./docker": {
+      "types": "./presets/preset.d.ts",
+      "default": "./presets/docker.cjs"
+    }
   },
   "files": [
     "index.js",
     "index.mjs",
     "index.cjs",
     "index.d.ts",
+    "index.d.mts",
+    "presets/",
     "config.svg",
     "LICENSE",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
     ".editorconfig"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "test": "node test/test.js",
+    "test": "node test/test.js && node test/exports.test.js && node test/optional-peers.test.js && node test/esm.test.mjs",
     "lint": "node test/test.js",
     "check:family": "node scripts/check-family.mjs"
   },
@@ -92,16 +164,34 @@
     "@sebastienrousseau/oxlint-config": "^0.0.7",
     "@sebastienrousseau/playwright-config": "^0.0.7",
     "@sebastienrousseau/prettier-config": "^0.0.7",
-    "@sebastienrousseau/remark-config": "^0.0.7",
-    "@sebastienrousseau/semantic-release-config": "^0.0.7",
     "@sebastienrousseau/size-limit-config": "^0.0.7",
     "@sebastienrousseau/stylelint-config": "^0.0.7",
     "@sebastienrousseau/tailwindcss-config": "^0.0.7",
     "@sebastienrousseau/tsconfig-config": "^0.0.7",
     "@sebastienrousseau/vitest-config": "^0.0.7"
   },
+  "peerDependencies": {
+    "@sebastienrousseau/remark-config": "^0.0.7",
+    "@sebastienrousseau/semantic-release-config": "^0.0.7"
+  },
+  "peerDependenciesMeta": {
+    "@sebastienrousseau/remark-config": {
+      "optional": true
+    },
+    "@sebastienrousseau/semantic-release-config": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=20.0.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "overrides": {
+    "katex": "^0.18.2",
+    "markdown-it": "^14.3.3",
+    "postcss-selector-parser": "^7.1.6",
+    "serialize-javascript": "^7.1.2",
+    "source-map-js": "^1.2.2",
+    "vite": "^8.2.4"
+  }
 }

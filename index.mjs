@@ -12,4 +12,31 @@
 
 import suite from "./index.cjs";
 
+// Named exports for `import { eslint } from "@sebastienrousseau/config"`.
+// The optional peers (remark, semanticRelease) are left out: a named export
+// is read on import, so listing them here would make the whole suite fail
+// when they are not installed. Use `suite.remark` or the subpath instead.
+// test/esm.test.mjs fails if this list drifts from index.cjs.
+export const {
+  biome,
+  browserslist,
+  c8,
+  commitlint,
+  docker,
+  eslint,
+  jsdoc,
+  knip,
+  lefthook,
+  markdownlint,
+  mocha,
+  oxlint,
+  playwright,
+  prettier,
+  sizeLimit,
+  stylelint,
+  tailwindcss,
+  tsconfig,
+  vitest,
+} = suite;
+
 export default suite;

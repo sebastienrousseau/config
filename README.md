@@ -15,7 +15,7 @@
   <a href="https://www.npmjs.com/package/@sebastienrousseau/config"><img src="https://img.shields.io/npm/v/@sebastienrousseau%2Fconfig?style=for-the-badge&color=fc8d62&logo=npm" alt="npm package" /></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/config"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/config?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" /></a>
   <a href="LICENSE-APACHE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg?style=for-the-badge" alt="License: Apache-2.0 OR MIT" /></a>
-  <a href="#minimum-toolchain-policy"><img src="https://img.shields.io/badge/node->=%2018.0.0-93450a.svg?style=for-the-badge&logo=node.js" alt="Node >= 18.0.0" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/node->=%2020.0.0-93450a.svg?style=for-the-badge&logo=node.js" alt="Node >= 20.0.0" /></a>
 </p>
 
 ---
@@ -27,7 +27,7 @@
 - [Quick Start](#quick-start) — Usage examples for all sub-configs
 
 **Configuration Suite Inventory**
-- [Included Packages](#included-packages) — Complete list of re-exported configs
+- [Included Packages](#included-packages-21-configurations) — Complete list of re-exported configs
 - [Module Compatibility](#module-compatibility) — Dual CJS/ESM & TypeScript support
 
 **Governance & Quality**
@@ -54,6 +54,17 @@ yarn add -D @sebastienrousseau/config
 # bun
 bun add -d @sebastienrousseau/config
 ```
+
+The remark and semantic-release presets are optional peers: they bring
+whole toolchains (remark-cli, semantic-release and the npm CLI it bundles),
+so the suite does not install them. Add the ones you use:
+
+```bash
+npm install --save-dev @sebastienrousseau/remark-config @sebastienrousseau/semantic-release-config
+```
+
+Reading `suite.remark` or `suite.semanticRelease` without the package
+installed throws an error that names the install command.
 
 ---
 
@@ -97,13 +108,13 @@ import { tailwindcss } from "@sebastienrousseau/config";
 | [`@sebastienrousseau/stylelint-config`](../stylelint-config) | `@sebastienrousseau/config/stylelint` | Stylelint | CSS and SCSS linting rules |
 | [`@sebastienrousseau/commitlint-config`](../commitlint-config) | `@sebastienrousseau/config/commitlint` | commitlint | Conventional Commits formatting rules |
 | [`@sebastienrousseau/markdownlint-config`](../markdownlint-config) | `@sebastienrousseau/config/markdownlint` | markdownlint | Markdown structure and style checks |
-| [`@sebastienrousseau/remark-config`](../remark-config) | `@sebastienrousseau/config/remark` | Remark | Markdown AST & GFM linting presets |
+| [`@sebastienrousseau/remark-config`](../remark-config) | `@sebastienrousseau/config/remark` | Remark | Markdown AST & GFM linting presets (optional peer) |
 | [`@sebastienrousseau/c8-config`](../c8-config) | `@sebastienrousseau/config/c8` | c8 V8 | 100% code coverage threshold rules |
 | [`@sebastienrousseau/jsdoc-config`](../jsdoc-config) | `@sebastienrousseau/config/jsdoc` | JSDoc | API documentation generator settings |
 | [`@sebastienrousseau/mocha-config`](../mocha-config) | `@sebastienrousseau/config/mocha` | Mocha | BDD unit test runner rules |
 | [`@sebastienrousseau/browserslist-config`](../browserslist-config) | `@sebastienrousseau/config/browserslist` | Browserslist | Modern browser target selection |
 | [`@sebastienrousseau/knip-config`](../knip-config) | `@sebastienrousseau/config/knip` | Knip | Dead code and unused dependency audit |
-| [`@sebastienrousseau/semantic-release-config`](../semantic-release-config) | `@sebastienrousseau/config/semantic-release` | semantic-release | Automated release & changelog rules |
+| [`@sebastienrousseau/semantic-release-config`](../semantic-release-config) | `@sebastienrousseau/config/semantic-release` | semantic-release | Automated release & changelog rules (optional peer) |
 | [`@sebastienrousseau/biome-config`](../biome-config) | `@sebastienrousseau/config/biome` | Biome | Ultra-fast Rust-based linting and formatting |
 | [`@sebastienrousseau/tailwindcss-config`](../tailwindcss-config) | `@sebastienrousseau/config/tailwindcss` | Tailwind CSS | Theme tokens, typography, and palettes |
 | [`@sebastienrousseau/playwright-config`](../playwright-config) | `@sebastienrousseau/config/playwright` | Playwright | Cross-browser E2E testing settings |
@@ -116,17 +127,15 @@ import { tailwindcss } from "@sebastienrousseau/config";
 
 ## Module Compatibility
 
-Exports dual module entrypoints via `package.json` `exports`:
-
-```json
-"exports": {
-  ".": {
-    "types": "./index.d.ts",
-    "import": "./index.mjs",
-    "require": "./index.cjs"
-  }
-}
-```
+- `require("@sebastienrousseau/config")` returns the suite object
+  (typed by `index.d.ts`).
+- `import suite from "@sebastienrousseau/config"` returns the same object,
+  and every required preset is also a named export
+  (`import { eslint } from "@sebastienrousseau/config"`), typed by
+  `index.d.mts`. The optional peers are only on the suite object.
+- Each preset has its own subpath, for both `import` and `require`:
+  `@sebastienrousseau/config/eslint`, `@sebastienrousseau/config/size-limit`,
+  and so on, as listed above.
 
 ---
 

@@ -3,6 +3,8 @@
 
 "use strict";
 
+const optionalPeer = require("./presets/optional-peer.cjs");
+
 /**
  * The aggregate configuration suite.
  *
@@ -13,6 +15,11 @@
  * particular checkout layout, and it turned a missing dependency into a
  * confusing path error somewhere else. A dependency that is not installed
  * should fail here, immediately, naming itself.
+ *
+ * The remark and semantic-release presets are optional peers (see
+ * presets/optional-peer.cjs). They load on first access, so the suite works
+ * without them and reading one that is not installed fails naming the
+ * package to install.
  *
  * @type {import('./index.d.ts').MasterConfigSuite}
  */
@@ -31,8 +38,12 @@ module.exports = {
   oxlint: require("@sebastienrousseau/oxlint-config"),
   playwright: require("@sebastienrousseau/playwright-config"),
   prettier: require("@sebastienrousseau/prettier-config"),
-  remark: require("@sebastienrousseau/remark-config"),
-  semanticRelease: require("@sebastienrousseau/semantic-release-config"),
+  get remark() {
+    return optionalPeer("@sebastienrousseau/remark-config");
+  },
+  get semanticRelease() {
+    return optionalPeer("@sebastienrousseau/semantic-release-config");
+  },
   sizeLimit: require("@sebastienrousseau/size-limit-config"),
   stylelint: require("@sebastienrousseau/stylelint-config"),
   tailwindcss: require("@sebastienrousseau/tailwindcss-config"),
