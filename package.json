@@ -137,6 +137,8 @@
     "presets/",
     "config.svg",
     "LICENSE",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
     ".editorconfig"
   ],
   "publishConfig": {
