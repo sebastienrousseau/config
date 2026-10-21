@@ -39,10 +39,14 @@ Released in lockstep with the configuration family at 0.0.7; 0.0.3 to
   OIDC publishing instead of an unpinned global install, hash-pinned pip
   installs and locked-mode `dotnet restore` in the native probes.
 
-### Known issue
+### Known issues
 
-- `braces` (GHSA-vfj7-8cjw-p6xm) still reaches the lockfile through
+- `braces` (GHSA-vfj7-8cjw-p6xm, high) still reaches installs through
   stylelint (globby, fast-glob, micromatch). No patched release of braces
   exists.
+- `katex` (GHSA-238p-pmpm-9mq7, low) reaches consumer installs through
+  markdownlint 0.42.0 and micromark-extension-math 3.1.0, which requires
+  katex ^0.16; the fix is in 0.18.2. This repository's lockfile is
+  constrained by `overrides`, but overrides do not apply to consumers.
 
 [0.0.7]: https://github.com/sebastienrousseau/config/compare/v0.0.2...v0.0.7
