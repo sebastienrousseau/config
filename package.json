@@ -1,6 +1,6 @@
 {
   "name": "@sebastienrousseau/config",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Master configuration suite aggregating the @sebastienrousseau JavaScript and web tooling configurations",
   "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
   "license": "Apache-2.0 OR MIT",

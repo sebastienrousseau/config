@@ -2,13 +2,30 @@
 
 ## [0.0.8]
 
+### Fixed
+
+-  The README claimed the ISC licence (it is Apache-2.0 OR MIT) and SLSA
+    provenance (no published version has it), and said all 21 presets
+    install with the suite; it now follows the repository README
+    template, with every claim checked against the repository.
+
 ### Changed
 
 -  `publish.yml` releases to npm with trusted publishing (OIDC) instead of
-  the `NPM_TOKEN` secret, which npm rejected when 0.0.7 was released, so
-  0.0.7 went out without provenance. The trusted publisher may only stage:
-  CI runs `npm stage publish --provenance`, and a maintainer makes the
-  version public with `npm stage approve <id>` and their 2FA.
+    the `NPM_TOKEN` secret, which npm rejected when 0.0.7 was released, so
+    0.0.7 went out without provenance. The trusted publisher may only stage:
+    CI runs `npm stage publish --provenance`, and a maintainer makes the
+    version public with `npm stage approve <id>` and their 2FA.
+-  `npm run lint` runs ESLint (with the complexity ceilings), Prettier, tsc
+    on the type declarations and markdownlint, all with the family presets,
+    and CI runs it on every pull request. It previously re-ran the tests.
+-  Sources are formatted with the family Prettier preset.
+
+### Added
+
+-  `docs/POLICIES.md`: toolchain floor, versioning, dependency and release
+    policies.
+-  `.github/demo.gif`, rendered from `.github/demo.tape` by `npm run demo`.
 
 ## [0.0.7]
 
@@ -59,5 +76,5 @@ Released in lockstep with the configuration family at 0.0.7; 0.0.3 to
   katex ^0.16; the fix is in 0.18.2. This repository's lockfile is
   constrained by `overrides`, but overrides do not apply to consumers.
 
-[0.0.8]: https://github.com/sebastienrousseau/config/compare/v0.0.7...feat/v0.0.8
+[0.0.8]: https://github.com/sebastienrousseau/config/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/sebastienrousseau/config/compare/v0.0.2...v0.0.7
