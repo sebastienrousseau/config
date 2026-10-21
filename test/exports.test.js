@@ -15,6 +15,14 @@
 const assert = require("assert");
 const manifest = require("../package.json");
 
+const outcome = (load) => {
+  try {
+    return { value: load() };
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
 const camel = (subpath) => subpath.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 
 const subpaths = Object.keys(manifest.exports)
@@ -29,11 +37,13 @@ assert.deepStrictEqual(
   "every suite key needs exactly one subpath export",
 );
 
+// An optional peer that is not installed throws on both paths; the message
+// must then be the same (test/optional-peers.test.js checks its wording).
 for (const subpath of subpaths) {
-  const viaSubpath = require(`@sebastienrousseau/config/${subpath}`);
-  assert.strictEqual(
-    viaSubpath,
-    suite[camel(subpath)],
+  const viaSubpath = outcome(() => require(`@sebastienrousseau/config/${subpath}`));
+  const viaSuite = outcome(() => suite[camel(subpath)]);
+  assert.ok(
+    viaSubpath.value === viaSuite.value && viaSubpath.error === viaSuite.error,
     `@sebastienrousseau/config/${subpath} must equal suite.${camel(subpath)}`,
   );
 }

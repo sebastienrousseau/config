@@ -3,4 +3,4 @@
 
 "use strict";
 
-module.exports = require("@sebastienrousseau/remark-config");
+module.exports = require("./optional-peer.cjs")("@sebastienrousseau/remark-config");

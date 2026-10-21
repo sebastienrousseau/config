@@ -74,7 +74,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "node test/test.js && node test/exports.test.js",
+    "test": "node test/test.js && node test/exports.test.js && node test/optional-peers.test.js",
     "lint": "node test/test.js",
     "check:family": "node scripts/check-family.mjs"
   },
@@ -93,16 +93,34 @@
     "@sebastienrousseau/oxlint-config": "^0.0.7",
     "@sebastienrousseau/playwright-config": "^0.0.7",
     "@sebastienrousseau/prettier-config": "^0.0.7",
-    "@sebastienrousseau/remark-config": "^0.0.7",
-    "@sebastienrousseau/semantic-release-config": "^0.0.7",
     "@sebastienrousseau/size-limit-config": "^0.0.7",
     "@sebastienrousseau/stylelint-config": "^0.0.7",
     "@sebastienrousseau/tailwindcss-config": "^0.0.7",
     "@sebastienrousseau/tsconfig-config": "^0.0.7",
     "@sebastienrousseau/vitest-config": "^0.0.7"
   },
+  "peerDependencies": {
+    "@sebastienrousseau/remark-config": "^0.0.7",
+    "@sebastienrousseau/semantic-release-config": "^0.0.7"
+  },
+  "peerDependenciesMeta": {
+    "@sebastienrousseau/remark-config": {
+      "optional": true
+    },
+    "@sebastienrousseau/semantic-release-config": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=20.0.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "overrides": {
+    "katex": "^0.18.2",
+    "markdown-it": "^14.3.3",
+    "postcss-selector-parser": "^7.1.6",
+    "serialize-javascript": "^7.1.2",
+    "source-map-js": "^1.2.2",
+    "vite": "^8.2.4"
+  }
 }
