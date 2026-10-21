@@ -1,6 +1,6 @@
 {
   "name": "@sebastienrousseau/config",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Master configuration suite aggregating the @sebastienrousseau JavaScript and web tooling configurations",
   "author": "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>",
   "license": "Apache-2.0 OR MIT",
@@ -146,8 +146,13 @@
   },
   "scripts": {
     "test": "node test/test.js && node test/exports.test.js && node test/optional-peers.test.js && node test/esm.test.mjs",
-    "lint": "node test/test.js",
-    "check:family": "node scripts/check-family.mjs"
+    "lint": "npm run lint:js && npm run lint:format && npm run lint:types && npm run lint:md",
+    "check:family": "node scripts/check-family.mjs",
+    "lint:js": "eslint --max-warnings 0 .",
+    "lint:format": "prettier --check \"**/*.{js,cjs,mjs,ts,mts}\"",
+    "lint:types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext index.d.ts index.d.mts presets/preset.d.ts",
+    "lint:md": "node scripts/lint-markdown.mjs",
+    "demo": "vhs .github/demo.tape"
   },
   "dependencies": {
     "@sebastienrousseau/biome-config": "^0.0.7",
@@ -193,5 +198,6 @@
     "serialize-javascript": "^7.1.2",
     "source-map-js": "^1.2.2",
     "vite": "^8.2.4"
-  }
+  },
+  "prettier": "@sebastienrousseau/prettier-config"
 }

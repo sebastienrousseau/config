@@ -4,7 +4,10 @@ const cjsConfig = require("../index.cjs");
 async function runTests() {
   console.log("Testing 21-package master suite @sebastienrousseau/config...");
 
-  assert(cjsConfig && typeof cjsConfig === "object", "Master config must be an object");
+  assert(
+    cjsConfig && typeof cjsConfig === "object",
+    "Master config must be an object",
+  );
   assert(cjsConfig.eslint, "Must export eslint configuration");
   assert(cjsConfig.prettier, "Must export prettier configuration");
   assert(cjsConfig.tsconfig, "Must export tsconfig configuration");

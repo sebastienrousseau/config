@@ -34,14 +34,23 @@ const isInstalled = (name) => {
 const suite = require("@sebastienrousseau/config");
 
 for (const [key, { subpath, name }] of Object.entries(OPTIONAL)) {
-  assert.ok(!(name in (manifest.dependencies ?? {})), `${name} must not be a dependency`);
-  assert.ok(name in (manifest.peerDependencies ?? {}), `${name} must be a peer dependency`);
+  assert.ok(
+    !(name in (manifest.dependencies ?? {})),
+    `${name} must not be a dependency`,
+  );
+  assert.ok(
+    name in (manifest.peerDependencies ?? {}),
+    `${name} must be a peer dependency`,
+  );
   assert.strictEqual(
     manifest.peerDependenciesMeta?.[name]?.optional,
     true,
     `${name} must be an optional peer`,
   );
-  assert.ok(Object.keys(suite).includes(key), `suite.${key} must stay enumerable`);
+  assert.ok(
+    Object.keys(suite).includes(key),
+    `suite.${key} must stay enumerable`,
+  );
 
   if (isInstalled(name)) {
     assert.strictEqual(suite[key], require(name));
@@ -54,4 +63,6 @@ for (const [key, { subpath, name }] of Object.entries(OPTIONAL)) {
   );
 }
 
-console.log(`✅ ${Object.keys(OPTIONAL).length} optional peers are lazy and name themselves`);
+console.log(
+  `✅ ${Object.keys(OPTIONAL).length} optional peers are lazy and name themselves`,
+);

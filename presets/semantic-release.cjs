@@ -3,4 +3,6 @@
 
 "use strict";
 
-module.exports = require("./optional-peer.cjs")("@sebastienrousseau/semantic-release-config");
+module.exports = require("./optional-peer.cjs")(
+  "@sebastienrousseau/semantic-release-config",
+);
