@@ -17,6 +17,8 @@ Released in lockstep with the configuration family at 0.0.7; 0.0.3 to
   module. It now uses `export =`, `index.d.mts` types the ESM entry
   (default and named exports), and every subpath has a declaration.
 - The README's Node badge said 18; the floor is Node 20 (`engines`).
+- The package now ships `LICENSE-APACHE` and `LICENSE-MIT`, the licence
+  texts `LICENSE` refers to; earlier tarballs carried neither.
 
 ### Changed
 
