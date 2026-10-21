@@ -23,7 +23,8 @@ const outcome = (load) => {
   }
 };
 
-const camel = (subpath) => subpath.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+const camel = (subpath) =>
+  subpath.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 
 const subpaths = Object.keys(manifest.exports)
   .filter((key) => key !== ".")
@@ -40,7 +41,9 @@ assert.deepStrictEqual(
 // An optional peer that is not installed throws on both paths; the message
 // must then be the same (test/optional-peers.test.js checks its wording).
 for (const subpath of subpaths) {
-  const viaSubpath = outcome(() => require(`@sebastienrousseau/config/${subpath}`));
+  const viaSubpath = outcome(() =>
+    require(`@sebastienrousseau/config/${subpath}`),
+  );
   const viaSuite = outcome(() => suite[camel(subpath)]);
   assert.ok(
     viaSubpath.value === viaSuite.value && viaSubpath.error === viaSuite.error,
@@ -48,4 +51,6 @@ for (const subpath of subpaths) {
   );
 }
 
-console.log(`✅ ${subpaths.length} subpath exports resolve and match the suite`);
+console.log(
+  `✅ ${subpaths.length} subpath exports resolve and match the suite`,
+);

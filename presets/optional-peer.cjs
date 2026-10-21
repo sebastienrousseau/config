@@ -17,7 +17,10 @@ module.exports = function optionalPeer(name) {
   try {
     return require(name);
   } catch (error) {
-    if (error.code !== "MODULE_NOT_FOUND" || !error.message.includes(`'${name}'`)) {
+    if (
+      error.code !== "MODULE_NOT_FOUND" ||
+      !error.message.includes(`'${name}'`)
+    ) {
       throw error;
     }
     throw new Error(

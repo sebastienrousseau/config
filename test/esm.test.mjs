@@ -18,14 +18,24 @@ import * as esm from "@sebastienrousseau/config";
 const OPTIONAL = ["remark", "semanticRelease"];
 const suite = esm.default;
 
-const named = Object.keys(esm).filter((key) => key !== "default").sort();
+const named = Object.keys(esm)
+  .filter((key) => key !== "default")
+  .sort();
 const required = Object.keys(suite)
   .filter((key) => !OPTIONAL.includes(key))
   .sort();
 
-assert.deepStrictEqual(named, required, "every required preset must be a named export");
+assert.deepStrictEqual(
+  named,
+  required,
+  "every required preset must be a named export",
+);
 for (const key of named) {
-  assert.strictEqual(esm[key], suite[key], `named export ${key} must equal default.${key}`);
+  assert.strictEqual(
+    esm[key],
+    suite[key],
+    `named export ${key} must equal default.${key}`,
+  );
 }
 
 const declared = [
@@ -33,6 +43,12 @@ const declared = [
     /^export declare const (\w+):/gm,
   ),
 ].map((match) => match[1]);
-assert.deepStrictEqual(declared.sort(), named, "index.d.mts must declare every named export");
+assert.deepStrictEqual(
+  declared.sort(),
+  named,
+  "index.d.mts must declare every named export",
+);
 
-console.log(`✅ ${named.length} named ESM exports match the suite and index.d.mts`);
+console.log(
+  `✅ ${named.length} named ESM exports match the suite and index.d.mts`,
+);

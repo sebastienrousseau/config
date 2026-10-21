@@ -193,5 +193,6 @@
     "serialize-javascript": "^7.1.2",
     "source-map-js": "^1.2.2",
     "vite": "^8.2.4"
-  }
+  },
+  "prettier": "@sebastienrousseau/prettier-config"
 }

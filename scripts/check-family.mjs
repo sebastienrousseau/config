@@ -13,8 +13,13 @@
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
-const table = readFileSync(new URL("../docs/FAMILY.md", import.meta.url), "utf8");
-const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const table = readFileSync(
+  new URL("../docs/FAMILY.md", import.meta.url),
+  "utf8",
+);
+const manifest = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+);
 
 const listed = new Set(
   [...table.matchAll(/\[`([a-z0-9-]+-config)`\]/g)].map((m) => m[1]),
@@ -40,7 +45,9 @@ for (const name of Object.keys(manifest.dependencies ?? {})) {
 for (const short of [...listed].sort()) {
   const name = `@sebastienrousseau/${short}`;
   try {
-    execFileSync("npm", ["view", name, "version"], { stdio: ["ignore", "pipe", "pipe"] });
+    execFileSync("npm", ["view", name, "version"], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   } catch {
     console.error(`listed in docs/FAMILY.md but not on the registry: ${name}`);
     failures += 1;
