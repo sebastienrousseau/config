@@ -29,8 +29,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install from the committed lockfile
+        run: npm ci
 
       - name: Run Tests
         run: npm test
