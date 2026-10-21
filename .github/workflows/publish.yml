@@ -45,24 +45,42 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
+      # Releases use npm trusted publishing (OIDC): npmjs.com trusts this
+      # repository's publish.yml, and the job's id-token proves the run, so
+      # no NPM_TOKEN is stored. The token this replaced was rejected with
+      # E404 on PUT when 0.0.7 was released.
+      # The trusted publisher may only *stage* a release: the job runs
+      # `npm stage publish`, and a maintainer makes it public with
+      # `npm stage approve <id>`, which asks for their 2FA.
+      # package-manager-cache is off so a cached npm cannot shadow the
+      # npm bundled with Node 24.
       - name: Setup Node.js for npmjs
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      # `npm stage` arrived after OIDC support (npm 11.5.1), so an npm
+      # that has it can do both.
+      - name: Require an npm that can stage with OIDC
+        run: |
+          npm --version
+          if ! npm stage --help >/dev/null 2>&1; then
+            echo "::error::npm $(npm --version) has no 'npm stage'; staged publishing needs a newer npm"
+            exit 1
+          fi
 
       - name: Dry-run publish to npmjs
         if: ${{ inputs.dry_run }}
         run: npm publish --access public --dry-run --registry=https://registry.npmjs.org
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to npmjs with SLSA provenance
+      - name: Stage for npmjs with SLSA provenance
         if: ${{ !inputs.dry_run }}
-        run: npm publish --access public --provenance --registry=https://registry.npmjs.org
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm stage publish --access public --provenance --registry=https://registry.npmjs.org
 
   publish-github:
     name: Publish to GitHub Packages

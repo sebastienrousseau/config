@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.8]
+
+### Changed
+
+- `publish.yml` releases to npm with trusted publishing (OIDC) instead of
+  the `NPM_TOKEN` secret, which npm rejected when 0.0.7 was released, so
+  0.0.7 went out without provenance. The trusted publisher may only stage:
+  CI runs `npm stage publish --provenance`, and a maintainer makes the
+  version public with `npm stage approve <id>` and their 2FA.
+
 ## [0.0.7]
 
 Released in lockstep with the configuration family at 0.0.7; 0.0.3 to
@@ -49,4 +59,5 @@ Released in lockstep with the configuration family at 0.0.7; 0.0.3 to
   katex ^0.16; the fix is in 0.18.2. This repository's lockfile is
   constrained by `overrides`, but overrides do not apply to consumers.
 
+[0.0.8]: https://github.com/sebastienrousseau/config/compare/v0.0.7...feat/v0.0.8
 [0.0.7]: https://github.com/sebastienrousseau/config/compare/v0.0.2...v0.0.7
