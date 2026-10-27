@@ -57,10 +57,241 @@ jobs:
       # These packages ship no runtime dependencies in the common case, so a
       # production audit must come back clean; a finding here is actionable.
       - name: Audit production dependencies
+        if: hashFiles('.github/security-exceptions.json') == ''
         run: npm audit --omit=dev --audit-level=low
 
       - name: Audit the full tree
+        if: hashFiles('.github/security-exceptions.json') == ''
         run: npm audit --audit-level=high
+
+      # A repository that cannot reach a clean audit (an advisory inside a
+      # bundled dependency with no fixed release) records each accepted
+      # advisory in .github/security-exceptions.json with a reason, owner,
+      # review date and expiry. The same levels then apply, an advisory passes
+      # only while a current exception names it, and an expired, overdue or
+      # stale exception fails. The checker below is generated from
+      # scripts/check-audit-exceptions.mjs by scripts/embed-audit-checker.mjs
+      # (never edit it here), so the consumer's single pinned ref covers it.
+      - name: Audit both trees against the documented exceptions
+        if: hashFiles('.github/security-exceptions.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          checker="${RUNNER_TEMP}/check-audit-exceptions.mjs"
+          cat > "${checker}" <<'CHECKER'
+          // SPDX-FileCopyrightText: 2026 Sebastien Rousseau <sebastian.rousseau@gmail.com>
+          // SPDX-License-Identifier: Apache-2.0 OR MIT
+
+          /**
+           * Gate `npm audit` with documented, time-bounded exceptions.
+           *
+           * Fails when the production tree has an advisory at or above --prod-level, or
+           * the full tree one at or above --full-level, that no exception names; when an
+           * exception is malformed, accepted in the future, past its review date or
+           * expired; and when an exception matches no advisory in the full tree any more
+           * (stale). An accepted risk therefore cannot become a permanent suppression.
+           *
+           * Usage: node check-audit-exceptions.mjs --prod prod.json --full full.json
+           *          [--exceptions .github/security-exceptions.json] [--today YYYY-MM-DD]
+           *          [--prod-level low] [--full-level high]
+           *
+           * The exceptions file is `{"exceptions": [{"advisory": "GHSA-…", "package",
+           * "reason", "owner", "accepted", "review_due", "expires"}]}`, dates in UTC.
+           */
+
+          import { existsSync, readFileSync } from "node:fs";
+          import { parseArgs } from "node:util";
+
+          const LEVELS = ["info", "low", "moderate", "high", "critical"];
+          const GHSA = /^GHSA(-[23456789cfghjmpqrvwx]{4}){3}$/;
+          const DATE = /^\d{4}-\d{2}-\d{2}$/;
+          const FIELDS = [
+            "advisory",
+            "package",
+            "reason",
+            "owner",
+            "accepted",
+            "review_due",
+            "expires",
+          ];
+
+          /** Every advisory in an `npm audit --json` report, as {id, pkg, severity}. */
+          function advisories(report) {
+            const found = [];
+            for (const vuln of Object.values(report.vulnerabilities ?? {})) {
+              for (const via of vuln.via ?? []) {
+                if (typeof via !== "object" || !via.url) {
+                  continue;
+                }
+                found.push({
+                  id: via.url.split("/").pop(),
+                  pkg: via.name ?? vuln.name,
+                  severity: via.severity,
+                });
+              }
+            }
+            return found;
+          }
+
+          const key = (id, pkg) => `${id} ${pkg}`;
+          const atLeast = (severity, level) =>
+            LEVELS.indexOf(severity) >= LEVELS.indexOf(level);
+
+          /** The date problem with one exception on `today`, or null. */
+          function dateProblem({ accepted, review_due: review, expires }, today) {
+            if (![accepted, review, expires].every((d) => DATE.test(d))) {
+              return "dates must be YYYY-MM-DD";
+            }
+            if (today >= expires) {
+              return `acceptance expired on ${expires}`;
+            }
+            if (!(accepted <= today && today < review && review <= expires)) {
+              return `review overdue (${review}) or invalid dates`;
+            }
+            return null;
+          }
+
+          /** Problems with one well-formed exception; `seen` tracks duplicates. */
+          function entryProblems(entry, today, seen) {
+            const problems = [];
+            if (!GHSA.test(entry.advisory)) {
+              problems.push("advisory is not a GHSA identifier");
+            }
+            const id = key(entry.advisory, entry.package);
+            if (seen.has(id)) {
+              problems.push("duplicate exception");
+            }
+            seen.add(id);
+            const date = dateProblem(entry, today);
+            if (date) {
+              problems.push(date);
+            }
+            return problems;
+          }
+
+          /** Problems with the exceptions themselves, evaluated on `today`. */
+          function checkEntries(entries, today) {
+            const problems = [];
+            const seen = new Set();
+            for (const entry of entries) {
+              const label = `${entry?.advisory ?? "?"} (${entry?.package ?? "?"})`;
+              const missing = FIELDS.filter(
+                (f) => typeof entry?.[f] !== "string" || !entry[f].trim(),
+              );
+              const found = missing.length
+                ? [`missing ${missing.join(", ")}`]
+                : entryProblems(entry, today, seen);
+              problems.push(...found.map((p) => `${label}: ${p}`));
+            }
+            return problems;
+          }
+
+          /** All problems: unexcepted advisories, bad or stale exceptions. */
+          function check({
+            prod,
+            full,
+            entries,
+            today,
+            prodLevel = "low",
+            fullLevel = "high",
+          }) {
+            const excepted = new Set(entries.map((e) => key(e.advisory, e.package)));
+            const problems = checkEntries(entries, today);
+            for (const [tree, report, level] of [
+              ["production", prod, prodLevel],
+              ["full", full, fullLevel],
+            ]) {
+              for (const a of advisories(report)) {
+                if (atLeast(a.severity, level) && !excepted.has(key(a.id, a.pkg))) {
+                  problems.push(
+                    `${tree} tree: ${a.id} in ${a.pkg} (${a.severity}) has no exception`,
+                  );
+                }
+              }
+            }
+            const present = new Set(advisories(full).map((a) => key(a.id, a.pkg)));
+            for (const e of entries) {
+              if (!present.has(key(e.advisory, e.package))) {
+                problems.push(
+                  `${e.advisory} (${e.package}): stale exception, no longer reported; remove it`,
+                );
+              }
+            }
+            return problems;
+          }
+
+          function main() {
+            const { values } = parseArgs({
+              options: {
+                prod: { type: "string" },
+                full: { type: "string" },
+                exceptions: {
+                  type: "string",
+                  default: ".github/security-exceptions.json",
+                },
+                today: { type: "string", default: new Date().toISOString().slice(0, 10) },
+                "prod-level": { type: "string", default: "low" },
+                "full-level": { type: "string", default: "high" },
+              },
+            });
+            if (!values.prod || !values.full) {
+              throw new Error("--prod and --full are required");
+            }
+            for (const level of [values["prod-level"], values["full-level"]]) {
+              if (!LEVELS.includes(level)) {
+                throw new Error(`unknown audit level ${level}`);
+              }
+            }
+            const read = (path) => JSON.parse(readFileSync(path, "utf8"));
+            const entries = existsSync(values.exceptions)
+              ? read(values.exceptions).exceptions
+              : [];
+            if (!Array.isArray(entries)) {
+              throw new Error(`${values.exceptions}: "exceptions" must be a list`);
+            }
+            const problems = check({
+              prod: read(values.prod),
+              full: read(values.full),
+              entries,
+              today: values.today,
+              prodLevel: values["prod-level"],
+              fullLevel: values["full-level"],
+            });
+            for (const e of entries) {
+              console.log(
+                `excepted ${e.advisory} (${e.package}): review ${e.review_due}, expires ${e.expires}, owner ${e.owner}`,
+              );
+            }
+            if (problems.length) {
+              for (const p of problems) {
+                console.error(`::error::${p}`);
+              }
+              process.exit(1);
+            }
+            console.log(
+              `audit gate passed with ${entries.length} documented exception(s)`,
+            );
+          }
+
+          // Always run: this file is only ever executed as a command (the workflow
+          // writes it to a temporary path), and a guard comparing paths can fail open
+          // when the path goes through a symlink.
+          try {
+            main();
+          } catch (err) {
+            console.error(`::error::audit exceptions gate failed: ${err.message}`);
+            process.exit(1);
+          }
+          CHECKER
+          # npm audit exits non-zero whenever it finds anything; the checker
+          # decides, so only a report npm could not write fails here.
+          npm audit --omit=dev --json > "${RUNNER_TEMP}/audit-prod.json" || true
+          npm audit --json > "${RUNNER_TEMP}/audit-full.json" || true
+          node "${checker}" \
+            --prod "${RUNNER_TEMP}/audit-prod.json" \
+            --full "${RUNNER_TEMP}/audit-full.json" \
+            --exceptions .github/security-exceptions.json \
+            --prod-level low --full-level high
 
       - name: Scan with OSV
         uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
