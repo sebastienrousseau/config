@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+-  `reusable-security.yml` reads an optional `.github/security-exceptions.json`
+    in the calling repository: documented, time-bounded exceptions for
+    advisories that cannot be fixed (for example inside the npm CLI that
+    `@semantic-release/npm` bundles). An advisory passes only while a current
+    exception names it; an expired, overdue or stale exception fails the job.
+    Without the file, the job runs as before. See `docs/POLICIES.md`.
+
 ## [0.0.8]
 
 ### Fixed
