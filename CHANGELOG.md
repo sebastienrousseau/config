@@ -11,6 +11,12 @@
     exception names it; an expired, overdue or stale exception fails the job.
     Without the file, the job runs as before. See `docs/POLICIES.md`.
 
+### Security
+
+-  `package-lock.json` moves serialize-javascript 7.1.2 to 7.1.4 (fixed
+    from 7.1.3, low; it comes in through mocha 12 under
+    `@sebastienrousseau/mocha-config`), matching mocha-config.
+
 ## [0.0.8]
 
 ### Fixed
