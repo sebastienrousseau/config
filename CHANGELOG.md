@@ -11,6 +11,17 @@
     exception names it; an expired, overdue or stale exception fails the job.
     Without the file, the job runs as before. See `docs/POLICIES.md`.
 
+### Security
+
+-  `package-lock.json` moves serialize-javascript 7.1.2 to 7.1.4 (fixed
+    from 7.1.3, low; it comes in through mocha 12 under
+    `@sebastienrousseau/mocha-config`), matching mocha-config.
+-  npm overrides now force `serialize-javascript ^7.1.4` (the override allowed
+    7.1.2), `minimatch ^11.0.1`, `glob ^14.0.2` and `re2js ^2.8.7`
+    (GHSA-g3hv-75wg-m249, GHSA-3g3m-2fjr-6pw4 and the re2js advisory fixed in
+    2.8.7, via markdownlint 0.42), keyed by name because npm 10 ignores a
+    range-keyed override that breaks the dependant's range.
+
 ## [0.0.8]
 
 ### Fixed
