@@ -206,7 +206,14 @@ jobs:
           # release. Anything else is a package name and has to be fetched.
           [[ "${ESLINT_CONFIG}" == ./* ]] || packages+=("${ESLINT_CONFIG}")
           [[ "${PRETTIER_CONFIG}" == ./* ]] || packages+=("${PRETTIER_CONFIG}")
-          npm install --no-save --no-audit --no-fund "${packages[@]}"
+          node -e '
+            const { execFileSync } = require("node:child_process");
+            execFileSync(
+              "npm",
+              ["install", "--no-save", "--no-audit", "--no-fund", "--ignore-scripts", ...process.argv.slice(1)],
+              { stdio: "inherit" },
+            );
+          ' "${packages[@]}"
 
       - name: Resolve the configuration paths
         id: configs
@@ -304,7 +311,14 @@ jobs:
           # A local path means this repository *is* the preset, so it lints
           # against what it is about to publish rather than the last release.
           [[ "${MARKDOWNLINT_CONFIG}" == ./* ]] ||
-            npm install --no-save --no-audit --no-fund "${MARKDOWNLINT_CONFIG}"
+            node -e '
+              const { execFileSync } = require("node:child_process");
+              execFileSync(
+                "npm",
+                ["install", "--no-save", "--no-audit", "--no-fund", "--ignore-scripts", process.env.MARKDOWNLINT_CONFIG],
+                { stdio: "inherit" },
+              );
+            '
           node -e '
             const fs = require("node:fs");
             const path = require("node:path");
