@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-11-16
+
+### Changed
+
+- Synchronize version to 0.0.9 across the config family and merge dependency updates.
+
 ### Added
 
 -  `reusable-security.yml` reads an optional `.github/security-exceptions.json`
