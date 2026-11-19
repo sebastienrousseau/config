@@ -171,7 +171,7 @@
     "@sebastienrousseau/prettier-config": "^0.0.7",
     "@sebastienrousseau/size-limit-config": "^0.0.7",
     "@sebastienrousseau/stylelint-config": "^0.0.7",
-    "@sebastienrousseau/tailwindcss-config": "^0.0.7",
+    "@sebastienrousseau/tailwindcss-config": "^0.0.9",
     "@sebastienrousseau/tsconfig-config": "^0.0.7",
     "@sebastienrousseau/vitest-config": "^0.0.7"
   },
