@@ -157,7 +157,7 @@
   "dependencies": {
     "@sebastienrousseau/biome-config": "^0.0.9",
     "@sebastienrousseau/browserslist-config": "^0.0.7",
-    "@sebastienrousseau/c8-config": "^0.0.7",
+    "@sebastienrousseau/c8-config": "^0.0.9",
     "@sebastienrousseau/commitlint-config": "^0.0.9",
     "@sebastienrousseau/docker-config": "^0.0.9",
     "@sebastienrousseau/eslint-config": "^0.0.9",
