@@ -160,7 +160,7 @@
     "@sebastienrousseau/c8-config": "^0.0.7",
     "@sebastienrousseau/commitlint-config": "^0.0.9",
     "@sebastienrousseau/docker-config": "^0.0.9",
-    "@sebastienrousseau/eslint-config": "^0.0.7",
+    "@sebastienrousseau/eslint-config": "^0.0.9",
     "@sebastienrousseau/jsdoc-config": "^0.0.7",
     "@sebastienrousseau/knip-config": "^0.0.9",
     "@sebastienrousseau/lefthook-config": "^0.0.7",
@@ -171,7 +171,7 @@
     "@sebastienrousseau/prettier-config": "^0.0.7",
     "@sebastienrousseau/size-limit-config": "^0.0.9",
     "@sebastienrousseau/stylelint-config": "^0.0.7",
-    "@sebastienrousseau/tailwindcss-config": "^0.0.7",
+    "@sebastienrousseau/tailwindcss-config": "^0.0.9",
     "@sebastienrousseau/tsconfig-config": "^0.0.7",
     "@sebastienrousseau/vitest-config": "^0.0.7"
   },
