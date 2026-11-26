@@ -165,7 +165,7 @@
     "@sebastienrousseau/knip-config": "^0.0.7",
     "@sebastienrousseau/lefthook-config": "^0.0.7",
     "@sebastienrousseau/markdownlint-config": "^0.0.7",
-    "@sebastienrousseau/mocha-config": "^0.0.7",
+    "@sebastienrousseau/mocha-config": "^0.0.9",
     "@sebastienrousseau/oxlint-config": "^0.0.7",
     "@sebastienrousseau/playwright-config": "^0.0.9",
     "@sebastienrousseau/prettier-config": "^0.0.7",
