@@ -155,7 +155,7 @@
     "demo": "vhs .github/demo.tape"
   },
   "dependencies": {
-    "@sebastienrousseau/biome-config": "^0.0.7",
+    "@sebastienrousseau/biome-config": "^0.0.9",
     "@sebastienrousseau/browserslist-config": "^0.0.7",
     "@sebastienrousseau/c8-config": "^0.0.7",
     "@sebastienrousseau/commitlint-config": "^0.0.7",
