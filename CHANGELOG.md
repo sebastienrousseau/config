@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+-  `reusable-security.yml`'s OSV scan honours `.github/security-exceptions.json`:
+    a passing audit gate writes the exceptions as `osv-scanner.toml`, each
+    ignore lapsing on the exception's expiry, so OSV no longer fails on an
+    advisory the register already accepts. A committed `osv-scanner.toml` is
+    refused. See `docs/POLICIES.md`.
+
 ## [0.0.9] - 2026-11-16
 
 ### Changed

@@ -9,7 +9,13 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -223,6 +229,64 @@ cases.push([
     { encoding: "utf8" },
   ),
 ]);
+
+/**
+ * Run the gate with --osv-config; stdout carries the written config (if any)
+ * so a case can match its content. `existing` pre-creates the target file.
+ */
+function osvRun({ exceptions, full, existing = false }) {
+  const out = join(dir, `osv${n++}.toml`);
+  if (existing) {
+    writeFileSync(out, "# committed\n");
+  }
+  const r = spawnSync(
+    process.execPath,
+    [
+      script,
+      "--prod",
+      file(audit()),
+      "--full",
+      file(full),
+      "--exceptions",
+      file({ exceptions }),
+      "--today",
+      "2026-10-27",
+      "--osv-config",
+      out,
+    ],
+    { encoding: "utf8" },
+  );
+  const written = existsSync(out) ? readFileSync(out, "utf8") : "<none>";
+  return { ...r, stdout: `${r.stdout}\n--- osv ---\n${written}` };
+}
+
+cases.push(
+  [
+    "a passing gate writes each exception as an OSV ignore lapsing at expiry",
+    null,
+    0,
+    /\[\[IgnoredVulns\]\]\nid = "GHSA-xjj6-f33q-929c"\nignoreUntil = 2026-12-26\nreason = "undici: /,
+    osvRun({ exceptions: [exception(HIGH[1], HIGH[0])], full: audit(HIGH) }),
+  ],
+  [
+    "a failing gate writes no OSV config",
+    null,
+    1,
+    /--- osv ---\n<none>/,
+    osvRun({ exceptions: [], full: audit(HIGH) }),
+  ],
+  [
+    "a committed OSV config is never overwritten",
+    null,
+    1,
+    /# committed[\s\S]*already exists/,
+    osvRun({
+      exceptions: [exception(HIGH[1], HIGH[0])],
+      full: audit(HIGH),
+      existing: true,
+    }),
+  ],
+);
 
 let failed = 0;
 for (const [name, input, expected, message, spawned] of cases) {
