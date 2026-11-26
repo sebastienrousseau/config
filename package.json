@@ -168,7 +168,7 @@
     "@sebastienrousseau/mocha-config": "^0.0.9",
     "@sebastienrousseau/oxlint-config": "^0.0.7",
     "@sebastienrousseau/playwright-config": "^0.0.9",
-    "@sebastienrousseau/prettier-config": "^0.0.7",
+    "@sebastienrousseau/prettier-config": "^0.0.9",
     "@sebastienrousseau/size-limit-config": "^0.0.9",
     "@sebastienrousseau/stylelint-config": "^0.0.7",
     "@sebastienrousseau/tailwindcss-config": "^0.0.9",
