@@ -35,7 +35,10 @@
     `YYYY-MM-DD` in UTC. `reusable-security.yml` then gates the production
     tree at low and the full tree at high against it, and fails on an
     advisory no exception names, an exception past its review date or expiry,
-    and an exception that no longer matches a reported advisory. Without the
+    and an exception that no longer matches a reported advisory. A passing
+    gate also writes the exceptions as `osv-scanner.toml`, so the OSV scan
+    ignores exactly those advisories and only until each one's `expires`; a
+    repository never commits its own `osv-scanner.toml`. Without the
     file, the two `npm audit` steps run as before. The workflow's copy of the
     checker is generated from `scripts/check-audit-exceptions.mjs` by
     `node scripts/embed-audit-checker.mjs`; `npm test` fails when they differ.
